@@ -38,7 +38,9 @@
         { src: 'scene/al-750.webp', cx: 150, base: 1508, h: 666, ar: 319 / 1500, lit: 1 },
         { src: 'scene/al-200.webp', cx: 292, base: 1524, h: 575.8, ar: 233 / 1526, lit: 0.9 },
       ],
-      fire: { x: 936, y: 905, rx: 104, ry: 68 },
+      fire: { x: 942, y: 892, rx: 142, ry: 72 },
+      fireVid: { src: 'hf-loop.webm', x: 942 - 475 * 1.45, y: 955 - 235 * 0.70, w: 960 * 1.45, h: 540 * 0.70 },
+      wisps: { x0: 830, x1: 1040, y: 632, w: 24, rate: 3.4, rise: 32 },
       steam: [{ x: 955, y: 520, rx: 95, ry: 170 }, { x: 152, y: 168, rx: 42, ry: 62 }, { x: 236, y: 430, rx: 44, ry: 62 }],
       glows: [{ x: 935, y: 900, r: 330, k: 0.08 }, { x: 935, y: 1010, r: 160, k: 0.12 }, { x: 60, y: 790, r: 210, k: 0.07 }],
       candles: [
@@ -358,10 +360,12 @@ void main(){
         vid = document.createElement('video');
         vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'auto';
         vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('aria-hidden', 'true');
-        vid.style.cssText = 'position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+        // sits behind the (opaque) WebGL canvas: never seen, but counts as on-screen so phones keep playing it
+        vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';
         vid.src = ctx.media(L.fireVid.src);
         vid.addEventListener('loadeddata', () => { vidReady = true; if (!paused && !document.hidden) vid.play().catch(() => {}); });
-        root.appendChild(vid);
+        vid.addEventListener('playing', () => { vidReady = true; });
+        root.insertBefore(vid, cv);
         if (!texV) texV = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texV);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
