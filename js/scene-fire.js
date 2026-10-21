@@ -324,40 +324,44 @@
       const onVis = () => { syncVideo(); if (!document.hidden) start(); };
       document.addEventListener('visibilitychange', onVis);
 
-      /* ---------- sound: crackle, low roar, pops with spark bursts ---------- */
+      /* ---------- sound: crackling fire only (client, 21 Oct) — no roar, no hiss ---------- */
       ctx.onSound((ac, out) => {
-        const nodes = [];
-        const roar = ac.createBufferSource(); roar.buffer = GAM.noiseBuffer(ac, 'brown', 6); roar.loop = true;
-        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
-        const rg = ac.createGain(); rg.gain.value = 0.32;
-        roar.connect(lp).connect(rg).connect(out); roar.start(); nodes.push(roar, lp, rg);
-        const lfo = ac.createOscillator(); lfo.frequency.value = 0.23; const lg = ac.createGain(); lg.gain.value = 0.12;
-        lfo.connect(lg).connect(rg.gain); lfo.start(); nodes.push(lfo, lg);
-        const hiss = ac.createBufferSource(); hiss.buffer = GAM.noiseBuffer(ac, 'pink', 5); hiss.loop = true;
-        const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500;
-        const hg = ac.createGain(); hg.gain.value = 0.025;
-        hiss.connect(hp).connect(hg).connect(out); hiss.start(); nodes.push(hiss, hp, hg);
-        const white = GAM.noiseBuffer(ac, 'white', 1);
-        function crack(vol, len, freq) {
+        const white = GAM.noiseBuffer(ac, 'white', 2);
+        const bus = ac.createGain(); bus.gain.value = 0.9; bus.connect(out);
+        // one crackle: a very short burst of filtered noise with a fast decay (resin popping in a log)
+        function crack(vol, len, freq, q) {
+          const t0 = ac.currentTime + 0.005;
           const s = ac.createBufferSource(); s.buffer = white;
-          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 0.9;
-          const gg = ac.createGain(); const t0 = ac.currentTime;
-          gg.gain.setValueAtTime(vol, t0); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
-          s.connect(bp).connect(gg).connect(out); s.start(t0, Math.random() * 0.8, len + 0.02);
+          const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
+          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q || 0.8;
+          const g = ac.createGain();
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(vol, t0 + 0.0015);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+          s.connect(hp).connect(bp).connect(g).connect(bus);
+          s.start(t0, Math.random() * 1.8, len + 0.03);
+        }
+        // a cluster of tiny clicks, sometimes with a deeper "snap" in front
+        function burst(big) {
+          const n = big ? 3 + Math.floor(Math.random() * 5) : 1 + Math.floor(Math.random() * (Math.random() < 0.35 ? 5 : 2));
+          if (big || Math.random() < 0.12) crack(0.22 + Math.random() * 0.18, 0.05 + Math.random() * 0.04, 700 + Math.random() * 700, 0.6);
+          let t = 0;
+          for (let i = 0; i < n; i++) {
+            t += 8 + Math.random() * (big ? 45 : 70);
+            setTimeout(() => !dead && crack(0.06 + Math.random() * 0.2, 0.008 + Math.random() * 0.03, 1800 + Math.random() * 4200, 0.7 + Math.random()), t);
+          }
         }
         let timer = 0, dead = false;
         (function tick() {
           if (dead) return;
-          if (!paused && visible) {
-            const n = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 3) : 1;
-            for (let i = 0; i < n; i++) setTimeout(() => !dead && crack(0.05 + Math.random() * 0.14, 0.012 + Math.random() * 0.03, 1500 + Math.random() * 3500), i * (15 + Math.random() * 40));
-          }
-          timer = setTimeout(tick, 60 + Math.random() * 420);
+          if (!paused && visible) burst(false);
+          // irregular rhythm: quick runs of crackles with short quiet gaps
+          timer = setTimeout(tick, Math.random() < 0.7 ? 70 + Math.random() * 260 : 350 + Math.random() * 700);
         })();
-        soundPop = () => { crack(0.35, 0.06, 900 + Math.random() * 600); setTimeout(() => !dead && crack(0.18, 0.03, 2600), 40); };
+        soundPop = () => burst(true);
         return () => {
           dead = true; clearTimeout(timer); soundPop = null;
-          nodes.forEach((n) => { try { n.stop && n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} });
+          try { bus.disconnect(); } catch (e) {}
         };
       });
 
