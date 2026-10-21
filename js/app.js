@@ -20,11 +20,15 @@
     volx: SVG('<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><line x1="22" x2="16" y1="9" y2="15"></line><line x1="16" x2="22" y1="9" y2="15"></line>'),
   };
 
+  // each mead comes in two sizes (client, 21 Oct): 750 ml C$39, 200 ml C$19
+  const SIZES = { 750: { label: '750 ml', price: 39 }, 200: { label: '200 ml', price: 19 } };
   const PRODUCTS = {
-    'ancient-lore': { name: 'Ancient Lore', price: 37, img: 'img/bottle-ancient.webp' },
-    'hearth-and-fire': { name: 'Hearth and Fire', price: 37, img: 'img/bottle-hearth.webp' },
-    'midnight-dream': { name: 'Midnight Dream', price: 37, img: 'img/bottle-midnight-750.webp' },
+    'hearth-and-fire': { name: 'Hearth and Fire', img: { 750: 'img/bottle-hf750.webp', 200: 'img/bottle-hf200.webp' } },
+    'midnight-dream': { name: 'Midnight Dream', img: { 750: 'img/bottle-md750.webp', 200: 'img/bottle-md200.webp' } },
+    'ancient-lore': { name: 'Ancient Lore', img: { 750: 'img/bottle-al750.webp', 200: 'img/bottle-al200.webp' } },
   };
+  // cart keys look like "hearth-and-fire|750"
+  const skuOf = (key) => { const [slug, size] = String(key).split('|'); return PRODUCTS[slug] && SIZES[size] ? { slug, size, p: PRODUCTS[slug], s: SIZES[size] } : null; };
   const KIND = { 'hearth-and-fire': 'fire', 'midnight-dream': 'garden', 'ancient-lore': 'library' };
   const SCENE_FILES = { fire: 'js/scene-fire.js', garden: 'js/scene-garden.js', library: 'js/scene-library.js' };
   const ROUTES = ['home', 'store', 'hearth-and-fire', 'midnight-dream', 'ancient-lore', 'building-the-farm', 'life-on-salt-spring', 'our-story', 'where-to-buy', 'contact', 'cart'];
@@ -45,6 +49,8 @@
   /* ---------------- cart ---------------- */
   let cart = store.get('gam2-cart', {});
   if (typeof cart !== 'object' || !cart) cart = {};
+  // carts saved before sizes existed held 750 ml bottles under the bare mead name
+  Object.keys(cart).forEach((k) => { if (!k.includes('|') && PRODUCTS[k]) { cart[k + '|750'] = (cart[k + '|750'] || 0) + cart[k]; delete cart[k]; } });
   const cartCount = () => Object.values(cart).reduce((s, n) => s + n, 0);
   function saveCart() { store.set('gam2-cart', cart); paintBadge(); }
   function paintBadge() {
@@ -56,11 +62,14 @@
     b.textContent = n;
     b.hidden = n === 0;
   }
-  function addToCart(slug, qty) {
-    cart[slug] = Math.min(24, (cart[slug] || 0) + qty);
+  function addToCart(slug, qty, size) {
+    size = SIZES[size] ? String(size) : '750';
+    const key = slug + '|' + size;
+    cart[key] = Math.min(24, (cart[key] || 0) + qty);
     saveCart();
-    toast(`${qty} × ${PRODUCTS[slug].name} added`, true);
+    toast(`${qty} × ${PRODUCTS[slug].name}, ${SIZES[size].label} added`, true);
   }
+  const sizeIn = (scope) => { const r = $('.gam-size input:checked', scope); return r ? r.value : '750'; };
 
   /* ---------------- toast ---------------- */
   let toastT = 0;
@@ -177,7 +186,16 @@
     $$('.mead-product', root).forEach((card) => {
       const link = $('a.mead-product-image', card);
       const slug = link && link.getAttribute('href').slice(1);
-      $$('button', card).forEach((b) => { if (/Add to cart/.test(b.textContent) && PRODUCTS[slug]) b.onclick = () => addToCart(slug, 1); });
+      const add = $('[data-add]', card);
+      if (!PRODUCTS[slug] || !add) return;
+      const paint = () => {
+        const size = sizeIn(card);
+        link.dataset.size = size;
+        add.textContent = `Add to cart · ${money(SIZES[size].price)}`;
+      };
+      $$('.gam-size input', card).forEach((r) => r.addEventListener('change', paint));
+      add.onclick = () => addToCart(slug, 1, sizeIn(card));
+      paint();
     });
   }
 
@@ -240,10 +258,19 @@
       let q = 1;
       const out = $('span', qtyWrap);
       const addBtn = $$('.mead-pdp-info button', root).find((b) => /Add to cart/.test(b.textContent));
-      const paint = () => { out.textContent = q; if (addBtn) addBtn.textContent = `Add to cart · ${money(37 * q)}`; };
+      const info = qtyWrap.closest('.mead-pdp-info') || root;
+      const amt = $('.gam-pdp-amt', info), sizeLbl = $('.gam-pdp-size', info);
+      const paint = () => {
+        const size = sizeIn(info), price = SIZES[size].price;
+        out.textContent = q;
+        if (amt) amt.textContent = money(price);
+        if (sizeLbl) sizeLbl.textContent = SIZES[size].label.toUpperCase();
+        if (addBtn) addBtn.textContent = `Add to cart · ${money(price * q)}`;
+      };
+      $$('.gam-size input', info).forEach((r) => r.addEventListener('change', paint));
       $('[aria-label="Decrease quantity"]', qtyWrap).onclick = () => { q = Math.max(1, q - 1); paint(); };
       $('[aria-label="Increase quantity"]', qtyWrap).onclick = () => { q = Math.min(12, q + 1); paint(); };
-      if (addBtn) addBtn.onclick = () => addToCart(route, q);
+      if (addBtn) addBtn.onclick = () => addToCart(route, q, sizeIn(info));
       paint();
     }
 
@@ -311,13 +338,13 @@
   function renderCart() {
     const box = $('#gamCart', root);
     if (!box) return;
-    const items = Object.entries(cart).filter(([s, n]) => n > 0 && PRODUCTS[s]);
+    const items = Object.entries(cart).filter(([k, n]) => n > 0 && skuOf(k));
     if (!items.length) {
       box.innerHTML = `<p class="gam-cart-empty">Your cart is empty.</p><div class="gam-cart-actions" style="justify-content:center"><a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow h-9 px-4 py-2 mead-primary" href="#store">Shop the meads</a></div>`;
       return;
     }
-    const total = items.reduce((s, [slug, n]) => s + n * PRODUCTS[slug].price, 0);
-    box.innerHTML = `<ul>${items.map(([slug, n]) => `<li><img src="${PRODUCTS[slug].img}" alt=""><div><h3>${PRODUCTS[slug].name}</h3><div class="gam-line">750 ml · ${money(PRODUCTS[slug].price)}</div><div class="gam-qty"><button type="button" data-q="-1" data-s="${slug}" aria-label="One fewer ${PRODUCTS[slug].name}">−</button><output>${n}</output><button type="button" data-q="1" data-s="${slug}" aria-label="One more ${PRODUCTS[slug].name}">+</button></div></div><div class="gam-price">${money(n * PRODUCTS[slug].price)}<button type="button" class="gam-remove" data-rm="${slug}">Remove</button></div></li>`).join('')}</ul>
+    const total = items.reduce((s, [k, n]) => s + n * skuOf(k).s.price, 0);
+    box.innerHTML = `<ul>${items.map(([k, n]) => { const x = skuOf(k), nm = `${x.p.name}, ${x.s.label}`; return `<li><img src="${x.p.img[x.size]}" alt=""><div><h3>${x.p.name}</h3><div class="gam-line">${x.s.label} · ${money(x.s.price)}</div><div class="gam-qty"><button type="button" data-q="-1" data-s="${k}" aria-label="One fewer ${nm}">−</button><output>${n}</output><button type="button" data-q="1" data-s="${k}" aria-label="One more ${nm}">+</button></div></div><div class="gam-price">${money(n * x.s.price)}<button type="button" class="gam-remove" data-rm="${k}">Remove</button></div></li>`; }).join('')}</ul>
       <div class="gam-cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
       <p class="gam-cart-note">Ships within Canada. You must be of legal drinking age to order. Taxes and delivery are worked out at checkout.</p>
       <div class="gam-cart-actions"><a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors text-primary underline-offset-4 hover:underline h-9 px-4 py-2 mead-product-link" href="#store">Keep shopping</a><button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow h-9 px-4 py-2 mead-primary" id="gamCheckout">Checkout</button></div>
