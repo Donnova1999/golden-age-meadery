@@ -75,7 +75,7 @@ html, body { background: #161513; }
 
 /* ---------- page photographs (client, 21 Oct) ---------- */
 /* Home: the farm in autumn behind the hero */
-.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610211830) 50% 58%/cover no-repeat}
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610211930) 50% 58%/cover no-repeat}
 .mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
 .mead-home[data-route=home] .mead-hero-shade{background:
   linear-gradient(90deg,rgba(10,8,6,.86) 0%,rgba(10,8,6,.72) 28%,rgba(10,8,6,.30) 52%,rgba(10,8,6,0) 70%),
@@ -91,11 +91,11 @@ html, body { background: #161513; }
 .mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
 .mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
 .mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
-.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610211830);background-position:60% 42%}
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610211930);background-position:60% 42%}
 .mead-home[data-route=store]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
-.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610211830);background-position:50% 40%}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610211930);background-position:50% 40%}
 .mead-home[data-route=contact]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
@@ -120,9 +120,9 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
 .gam-age { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 16px; background: #0e0c0a; overflow: auto;
   transition: opacity .45s ease, visibility .45s; }
 .gam-age.out { opacity: 0; visibility: hidden; }
-.gam-age::before { content: ""; position: absolute; inset: -40px; background: url(../img/bg-home.webp?v=202610211830) 50% 55% / cover no-repeat;
+.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-home.webp?v=202610211930) 50% 55% / cover no-repeat;
   filter: blur(14px) brightness(.5) saturate(1.1); transform: scale(1.04); }
-.gam-age::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
+.gam-age::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
 .gam-age-card { position: relative; z-index: 1; width: min(460px, 100%); text-align: center; padding: 40px 34px 28px; color: #f3ead6;
   background: rgba(18,15,12,.74); border: 1px solid rgba(214,186,128,.28); box-shadow: 0 30px 80px rgba(0,0,0,.55);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font: 400 14px/1.6 Manrope, system-ui, sans-serif; }
@@ -147,4 +147,30 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
   .gam-age h2 { font-size: 32px; }
   .gam-age-logo { width: 88px; height: 88px; }
   .gam-age-btns button { min-width: 0; flex: 1; }
+}
+
+/* ---------- two bottle sizes per mead (client, 21 Oct) ---------- */
+.gam-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.mead-product-image.gam-pair { align-items: flex-end; gap: 18px; }
+.mead-product-image.gam-pair img { height: 100%; width: auto; transition: transform .7s, opacity .35s, filter .35s; filter: drop-shadow(0 18px 18px rgba(0,0,0,.45)); }
+.mead-product-image.gam-pair .gam-b200 { height: 86%; }  /* true-to-life: the 200 ml stands lower than the 750 ml */
+.mead-product-image.gam-pair[data-size="750"] .gam-b200,
+.mead-product-image.gam-pair[data-size="200"] .gam-b750 { opacity: .5; filter: drop-shadow(0 18px 18px rgba(0,0,0,.45)) saturate(.7); }
+.mead-product-image.gam-pair:hover img { transform: none; }
+.mead-product-image.gam-pair[data-size="750"]:hover .gam-b750,
+.mead-product-image.gam-pair[data-size="200"]:hover .gam-b200 { transform: translateY(-8px); }
+.gam-size { display: flex; gap: 8px; margin: 18px 0 0; padding: 0; border: 0; min-width: 0; }
+.gam-size label { flex: 1; position: relative; cursor: pointer; }
+.gam-size input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.gam-size span { display: flex; justify-content: space-between; align-items: center; gap: 8px; height: 42px; padding: 0 14px;
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent); color: var(--foreground);
+  font: 500 11px/1 var(--font-sans, Manrope, sans-serif); letter-spacing: .08em; text-transform: uppercase; transition: background .2s, border-color .2s, color .2s; }
+.gam-size b { font-weight: 600; color: var(--primary); letter-spacing: .02em; }
+.gam-size label:hover span { border-color: var(--primary); }
+.gam-size input:checked + span { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+.gam-size input:checked + span b { color: var(--primary-foreground); }
+.gam-size input:focus-visible + span { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.mead-pdp-info .gam-size { max-width: 360px; margin: 22px 0 18px; }
+@media (max-width: 760px) {
+  .mead-product-image.gam-pair { gap: 14px; }
 }
