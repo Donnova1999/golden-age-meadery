@@ -19,15 +19,14 @@
       fire: { x: 345, y: 205, rx: 230, ry: 190 }, spark: { x: 345, y: 300, spread: 120, rise: 300 },
       wrap: 'linear-gradient(100deg, rgba(255,150,70,.62) 0%, rgba(255,128,48,.22) 32%, rgba(255,110,40,0) 58%)',
     },
+    // phone (client 22 Oct): Miki's realistic fireplace picture with the real bottles composited in;
+    // everything static is baked into one plate, only the fire (real video) and the lantern candle move
     mob: {
-      w: 768, h: 1376,
-      bg: 'scene/hf-bg-m.webp', fg: 'scene/hf-fg-m.webp', bottles: 'scene/hf-bottles-m.webp',
-      front: 'scene/hf-front-m.webp', mask: 'scene/hf-firemask-m.png', video: 'hf-loop-m.webm',
-      vid: { x: -130, y: 11, w: 960 * 0.79, h: 1706 * 0.79 },
-      bottlesBox: [207, 537, 353, 565], frontBox: [202, 1064, 366, 227],
-      candles: [{ x: 19, y: 452, wick: 466, r: 11 }],
-      fire: { x: 350, y: 420, rx: 230, ry: 260 }, spark: { x: 350, y: 600, spread: 130, rise: 360 },
-      wrap: 'linear-gradient(170deg, rgba(255,150,70,.55) 0%, rgba(255,128,48,.2) 30%, rgba(255,110,40,0) 55%)',
+      w: 945, h: 1304, real: true,
+      bg: 'scene/hf-real-m.webp', mask: 'scene/hf-real-firemask-m.png', video: 'hf-loop.webm',
+      vid: { x: 149.5, y: 381, w: 960 * 1.15, h: 540 * 1.15 }, vidBlend: 'screen', vidFilter: 'brightness(.95) contrast(1.6)',
+      candles: [{ x: 61, y: 505, wick: 524, r: 6 }],
+      fire: { x: 690, y: 560, rx: 230, ry: 220 }, spark: null,
     },
   };
 
@@ -80,9 +79,10 @@
         const fire = el('div', 'position:absolute;inset:0;pointer-events:none;' +
           `-webkit-mask-image:url(${ctx.img(set.mask)});mask-image:url(${ctx.img(set.mask)});` +
           '-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat', root);
+        if (set.vidBlend) fire.style.mixBlendMode = set.vidBlend;
         if (!reduced) {
           video = el('video', `position:absolute;left:${pct(set.vid.x, set.w)};top:${pct(set.vid.y, set.h)};` +
-            `width:${pct(set.vid.w, set.w)};height:${pct(set.vid.h, set.h)};object-fit:fill;filter:brightness(.93) saturate(1.04)`, fire);
+            `width:${pct(set.vid.w, set.w)};height:${pct(set.vid.h, set.h)};object-fit:fill;filter:${set.vidFilter || 'brightness(.93) saturate(1.04)'}`, fire);
           video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
           video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true');
           video.src = ctx.media(set.video);
@@ -94,6 +94,13 @@
         // candles, smoke, sparks (behind the table)
         fx = el('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none', root);
         g = fx.getContext('2d');
+        if (set.real) {
+          // realistic plate: bottles, coupe and table are part of the picture
+          el('div', 'position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 95% 85% at 50% 45%, rgba(0,0,0,0) 62%, rgba(8,4,2,.28) 100%)', root);
+          resize();
+          if (reduced) drawStill();
+          return;
+        }
         el('img', imgCss, root).src = ctx.img(set.fg);
         // bottles + firelight wrap clipped to the bottle shapes
         const [bx, by, bw, bh] = set.bottlesBox;
@@ -266,16 +273,16 @@
         g.clearRect(0, 0, fx.width, fx.height);
         set.candles.forEach((c, i) => drawCandle(c, i, t, false));
         drawSmoke(dt);
-        // trickle of sparks + occasional bursts with a pop
-        if (Math.random() < dt * 2.2) emitSpark(false);
+        // trickle of sparks + occasional bursts with a pop (the realistic phone picture keeps just the pop)
+        if (set.spark && Math.random() < dt * 2.2) emitSpark(false);
         nextBurst -= dt;
         if (nextBurst <= 0) {
           nextBurst = 3.5 + Math.random() * 5;
           const n = 6 + Math.floor(Math.random() * 9);
-          for (let i = 0; i < n; i++) emitSpark(true);
+          if (set.spark) for (let i = 0; i < n; i++) emitSpark(true);
           if (soundPop) soundPop();
         }
-        drawSparks(dt);
+        if (set.spark) drawSparks(dt);
       }
 
       function drawStill() {

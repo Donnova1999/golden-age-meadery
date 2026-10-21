@@ -31,31 +31,26 @@
       // [spine-top, outer-top, outer-bottom, spine-bottom]
       book: { right: [[707, 350], [906, 375], [829, 454], [597, 447]], left: [[707, 350], [470, 367], [397, 428], [597, 447]], lift: 0.86 },
     },
+    // phone (client 22 Oct): Miki's realistic library picture; real bottles stand where the AI ones were,
+    // the closed book became the open one (pages turn), the cauldron fire is real video, candles sway
     mob: {
-      img: 'scene/al-bg-m.webp', nf: 'scene/al-nf-m.webp', mask: 'scene/al-mask-m.png', w: 1088, h: 1920,
-      front: { src: 'scene/al-front-m.webp', box: [214, 1433, 331, 132] },
+      img: 'scene/al-real-m.webp', nf: 'scene/al-real-nf-m.webp', mask: 'scene/al-real-mask-m.png', w: 945, h: 1304,
+      front: null,
       bottles: [
-        { src: 'scene/al-750.webp', cx: 150, base: 1508, h: 666, ar: 319 / 1500, lit: 1 },
-        { src: 'scene/al-200.webp', cx: 292, base: 1524, h: 575.8, ar: 233 / 1526, lit: 0.9 },
+        { src: 'scene/al-real-750.webp', cx: 196.0, base: 943.0, h: 640.0, ar: 0.21327, lit: 0.8 },
+        { src: 'scene/al-real-200.webp', cx: 321.0, base: 940.0, h: 595.2, ar: 0.15390, lit: 0.7 },
       ],
-      fire: { x: 942, y: 892, rx: 142, ry: 72 },
-      fireVid: { src: 'hf-loop.webm', x: 942 - 475 * 1.45, y: 955 - 235 * 0.70, w: 960 * 1.45, h: 540 * 0.70 },
-      wisps: { x0: 830, x1: 1040, y: 632, w: 24, rate: 3.4, rise: 32 },
-      steam: [{ x: 955, y: 520, rx: 95, ry: 170 }, { x: 152, y: 168, rx: 42, ry: 62 }, { x: 236, y: 430, rx: 44, ry: 62 }],
-      glows: [{ x: 935, y: 900, r: 330, k: 0.08 }, { x: 935, y: 1010, r: 160, k: 0.12 }, { x: 60, y: 790, r: 210, k: 0.07 }],
+      bottleLight: 'linear-gradient(100deg,rgba(255,236,200,.22) 0%,rgba(255,220,170,.06) 35%,rgba(0,0,0,0) 60%,rgba(255,170,90,.2) 100%)',
+      fire: { x: 880, y: 690, rx: 90, ry: 62 },
+      fireVid: { src: 'hf-loop.webm', x: 820 - 380 * 0.7, y: 735 - 225 * 0.7, w: 960 * 0.7, h: 540 * 0.7 },
+      wisps: { x0: 800, x1: 925, y: 428, w: 14, rate: 3, rise: 26 },
+      steam: [{ x: 865, y: 360, rx: 70, ry: 80 }],
+      glows: [{ x: 880, y: 690, r: 220, k: 0.07 }, { x: 880, y: 745, r: 110, k: 0.1 }, { x: 35, y: 335, r: 110, k: 0.06 }],
       candles: [
-        { x: 60, tip: 747, base: 812, w: 12 },
-        { x: 843, tip: 94, base: 122, w: 9 },
-        { x: 875, tip: 121, base: 147, w: 8 },
-        { x: 809, tip: 124, base: 146, w: 8 },
-        { x: 1033, tip: 262, base: 282, w: 7 },
-        { x: 690, tip: 585, base: 606, w: 7 },
-        { x: 779, tip: 504, base: 524, w: 7 },
-        { x: 638, tip: 761, base: 780, w: 7 },
-        { x: 610, tip: 730, base: 748, w: 6 },
-        { x: 668, tip: 603, base: 618, w: 6 },
+        { x: 34.5, tip: 317, base: 353, w: 5 },
+        { x: 655.5, tip: 467, base: 490, w: 4 },
       ],
-      book: { right: [[250, 1088], [484, 1053], [625, 1213], [384, 1256]], left: [[250, 1088], [-19, 1113], [96, 1298], [384, 1256]], lift: 0.8 },
+      book: { right: [[424.8, 700.0], [540.2, 714.5], [495.6, 760.3], [361.0, 756.3]], left: [[424.8, 700.0], [287.3, 709.9], [245.0, 745.2], [361.0, 756.3]], lift: 0.8 },
     },
   };
 
@@ -277,7 +272,7 @@ void main(){
           const url = 'url("' + ctx.img(b.src) + '")';
           lightEl.style.cssText = 'position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;' +
             '-webkit-mask-image:' + url + ';mask-image:' + url + ';-webkit-mask-size:100% 100%;mask-size:100% 100%;' +
-            'background:linear-gradient(100deg,rgba(255,160,85,.42) 0%,rgba(255,175,95,.14) 38%,rgba(0,0,0,0) 62%,rgba(255,195,125,.1) 100%);opacity:.5';
+            'background:' + (L.bottleLight || 'linear-gradient(100deg,rgba(255,160,85,.42) 0%,rgba(255,175,95,.14) 38%,rgba(0,0,0,0) 62%,rgba(255,195,125,.1) 100%)') + ';opacity:.5';
           wrap.append(im, lightEl);
           bottleLayer.appendChild(wrap);
           return { b, wrap, lightEl };
