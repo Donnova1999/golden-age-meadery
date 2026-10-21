@@ -72,3 +72,41 @@ html, body { background: #161513; }
 @media (prefers-reduced-motion: reduce) {
   .gam-veil, .gam-toast { transition: none; }
 }
+
+/* ---------- page photographs (client, 21 Oct) ---------- */
+/* Home: the farm in autumn behind the hero */
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610211530) 50% 58%/cover no-repeat}
+.mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
+.mead-home[data-route=home] .mead-hero-shade{background:
+  linear-gradient(90deg,rgba(10,8,6,.86) 0%,rgba(10,8,6,.72) 28%,rgba(10,8,6,.30) 52%,rgba(10,8,6,0) 70%),
+  linear-gradient(180deg,rgba(10,8,6,.40) 0%,rgba(10,8,6,0) 20%,rgba(10,8,6,0) 72%,var(--background) 100%)}
+.mead-home[data-route=home] .mead-hero-copy{text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.mead-home[data-route=home] .mead-hero-bottles img{filter:drop-shadow(0 22px 26px rgba(0,0,0,.5)) drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.mead-home[data-route=home] .mead-bottle-caption{color:#f3ead9;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+@media (max-width:760px){
+  .mead-home[data-route=home] .mead-hero-media{background-position:41% 50%}
+  .mead-home[data-route=home] .mead-hero-shade{background:linear-gradient(180deg,rgba(10,8,6,.84) 0%,rgba(10,8,6,.62) 42%,rgba(10,8,6,.12) 62%,rgba(10,8,6,.18) 82%,var(--background) 100%)}
+}
+/* Store + Contact: photograph behind the page, content on soft dark glass */
+.mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
+.mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
+.mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610211530);background-position:60% 42%}
+.mead-home[data-route=store]>main:after{background:
+  linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
+  linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610211530);background-position:50% 40%}
+.mead-home[data-route=contact]>main:after{background:
+  linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
+  linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
+.mead-home[data-route=store] .mead-page-hero,.mead-home[data-route=contact] .mead-page-hero{text-shadow:0 2px 18px rgba(0,0,0,.55)}
+.mead-home[data-route=store] .mead-page-lede,.mead-home[data-route=contact] .mead-page-lede{color:#e9dfcd}
+.mead-home[data-route=store] .mead-product{background:rgba(14,11,8,.62);-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);border:1px solid rgba(255,236,200,.10);padding:22px 22px 26px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.mead-home[data-route=store] .mead-product-image{background:transparent}
+.mead-home[data-route=contact] .mead-form{background:rgba(14,11,8,.62);-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);border:1px solid rgba(255,236,200,.10);padding:34px 34px 38px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+@media (max-width:760px){
+  .mead-home[data-route=store]>main:before{background-position:70% 40%}
+  .mead-home[data-route=contact]>main:before{background-position:50% 30%}
+  .mead-home[data-route=contact] .mead-form{padding:24px 20px 28px}
+  .mead-home[data-route=store] .mead-product{padding:18px 16px 22px}
+}
