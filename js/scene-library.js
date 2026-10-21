@@ -11,9 +11,10 @@
   /* ---------------- composition data (image pixel coordinates) ---------------- */
   const LAYOUT = {
     desk: {
-      img: 'scene/al-bg.webp', w: 1376, h: 768,
+      img: 'scene/al-bg.webp', nf: 'scene/al-nf.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
+      front: { src: 'scene/al-front.webp', box: [799, 555, 269, 87] },
       bottles: [
-        { src: 'scene/al-200.webp', cx: 846, base: 590, h: 340, ar: 233 / 1500, lit: 0.9 },
+        { src: 'scene/al-200.webp', cx: 846, base: 590, h: 345.9, ar: 233 / 1526, lit: 0.9 },
         { src: 'scene/al-750.webp', cx: 925, base: 575, h: 400, ar: 319 / 1500, lit: 1 },
       ],
       fire: { x: 286, y: 482, rx: 84, ry: 64 },
@@ -28,10 +29,11 @@
       book: { right: [[707, 350], [906, 375], [829, 454], [597, 447]], left: [[707, 350], [470, 367], [397, 428], [597, 447]], lift: 0.86 },
     },
     mob: {
-      img: 'scene/al-bg-m.webp', w: 1088, h: 1920,
+      img: 'scene/al-bg-m.webp', nf: 'scene/al-nf-m.webp', mask: 'scene/al-mask-m.png', w: 1088, h: 1920,
+      front: { src: 'scene/al-front-m.webp', box: [214, 1433, 331, 132] },
       bottles: [
         { src: 'scene/al-750.webp', cx: 150, base: 1508, h: 666, ar: 319 / 1500, lit: 1 },
-        { src: 'scene/al-200.webp', cx: 292, base: 1524, h: 566, ar: 233 / 1500, lit: 0.9 },
+        { src: 'scene/al-200.webp', cx: 292, base: 1524, h: 575.8, ar: 233 / 1526, lit: 0.9 },
       ],
       fire: { x: 936, y: 905, rx: 104, ry: 68 },
       steam: [{ x: 955, y: 520, rx: 95, ry: 170 }, { x: 152, y: 168, rx: 42, ry: 62 }, { x: 236, y: 430, rx: 44, ry: 62 }],
@@ -76,7 +78,7 @@
   const VS_FULL = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   const FS_BASE = `
 precision highp float;
-uniform sampler2D uTex; uniform vec2 uRes; uniform vec4 uMap; uniform vec2 uImg; uniform float uTime;
+uniform sampler2D uTex; uniform sampler2D uNF; uniform sampler2D uMsk; uniform vec2 uRes; uniform vec4 uMap; uniform vec2 uImg; uniform float uTime;
 uniform vec4 uC[10]; uniform vec4 uCA[10]; uniform int uNC;
 uniform vec4 uF; uniform vec3 uFA;
 uniform vec4 uS[3]; uniform int uNS;
@@ -85,36 +87,42 @@ float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
 vec3 tex(vec2 px){return texture2D(uTex,clamp(px/uImg,vec2(0.0005),vec2(0.9995))).rgb;}
+vec3 texNF(vec2 px){return texture2D(uNF,clamp(px/uImg,vec2(0.0005),vec2(0.9995))).rgb;}
+float flameA(vec2 px){return texture2D(uMsk,clamp(px/uImg,vec2(0.0005),vec2(0.9995))).r;}
 void main(){
   vec2 frag=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);
   vec2 p=(frag-uMap.yz)/uMap.x;
-  vec2 q=p;
-  float candleM=0.; vec3 add=vec3(0.); float mul=1.;
+  // candles: only the flame itself sways/stretches; it is composited over a flameless photo, so nothing behind it moves
+  float flA=0.; vec2 qc=p; vec3 add=vec3(0.); float bright=0.;
   for(int i=0;i<10;i++){
     if(i>=uNC) break;
     vec4 c=uC[i]; vec4 a=uCA[i];
     float h=c.z-c.y; vec2 base=vec2(c.x,c.z);
     vec2 d=p-base;
     float yy=clamp(-d.y/h,0.,1.6);
-    float mx=1.-smoothstep(c.w*1.1,c.w*2.8,abs(d.x));
-    float my=smoothstep(-h*0.12,h*0.05,-d.y)*(1.-smoothstep(h*1.15,h*1.9,-d.y));
+    float mx=1.-smoothstep(c.w*1.6,c.w*3.2,abs(d.x));
+    float my=smoothstep(-h*0.12,h*0.05,-d.y)*(1.-smoothstep(h*1.25,h*2.0,-d.y));
     float m=mx*my;
-    q.x-=a.x*c.w*0.95*pow(yy,1.5)*m;
-    q.y=mix(q.y,base.y+d.y/(1.+a.y),m);
-    float core=m*(1.-smoothstep(0.2,1.5,yy));
-    mul*=1.+a.z*core*0.5;
+    if(m>0.){
+      vec2 q=p;
+      q.x-=a.x*c.w*0.95*pow(yy,1.5)*m;
+      q.y=mix(q.y,base.y+d.y/(1.+a.y),m);
+      float fa=flameA(q)*m;
+      if(fa>flA){ flA=fa; qc=q; bright=a.z; }
+    }
     vec2 dd=(p-vec2(c.x,(c.y+c.z)*0.5))/vec2(h*1.6,h*2.1);
     add+=vec3(1.,.6,.26)*a.w*exp(-dot(dd,dd)*1.6);
-    candleM=max(candleM,m);
   }
   // slow fire + drifting steam: two-phase flow (cross-faded) so nothing ever jumps
   vec2 fd=(p-uF.xy)/uF.zw;
   float mF=(1.-smoothstep(0.55,1.,length(fd)))*(1.-smoothstep(0.2,1.05,fd.y));
-  float ph=uTime*0.2; float a1=fract(ph), a2=fract(ph+0.5);
+  float ph=uTime*0.32; float a1=fract(ph), a2=fract(ph+0.5);
   float w1=1.-abs(2.*a1-1.);
-  float n1=noise(p*0.045+vec2(0.,-uTime*0.35))-0.5;
+  float n1=noise(p*0.045+vec2(0.,-uTime*0.55))-0.5;
   vec2 fv=vec2(n1*0.7,1.)*13.;
   vec2 o1=fv*(a1-0.5)*mF, o2=fv*(a2-0.5)*mF;
+  float fireA=mF*flameA(p);
+  vec2 s1o=vec2(0.), s2o=vec2(0.); float sw=0.5;
   float mS=0.;
   for(int i=0;i<3;i++){
     if(i>=uNS) break;
@@ -123,22 +131,21 @@ void main(){
     float n2=noise(p*0.02+vec2(uTime*0.05,-uTime*0.12))-0.5;
     float s1=fract(uTime*0.07+float(i)*0.31), s2=fract(uTime*0.07+float(i)*0.31+0.5);
     vec2 sv=vec2(n2*1.4,1.)*24.;
-    o1+=sv*(s1-0.5)*m; o2+=sv*(s2-0.5)*m;
-    mS=max(mS,m);
-    if(i==0) w1=mix(w1,1.-abs(2.*s1-1.),step(mF,m*0.5));
+    s1o+=sv*(s1-0.5)*m; s2o+=sv*(s2-0.5)*m;
+    if(m>mS){ mS=m; sw=1.-abs(2.*s1-1.); }
   }
-  vec3 col;
-  if(mF+mS>0.001){ col=tex(q+o1)*w1+tex(q+o2)*(1.-w1); }
-  else col=tex(q);
-  col*=mul;
-  col*=1.+uFA.x*mF*0.16;
-  col+=vec3(1.,.55,.2)*mF*max(uFA.x,0.)*0.06;
+  vec3 col=texNF(p);
+  if(mS>0.001){ col=texNF(p+s1o)*sw+texNF(p+s2o)*(1.-sw); }
+  if(fireA>0.001){ vec3 fl=tex(p+o1)*w1+tex(p+o2)*(1.-w1); col=mix(col,fl,clamp(fireA,0.,1.)); }
+  if(flA>0.001){ vec3 fc=tex(qc)*(1.+bright*0.35); col=mix(col,fc,clamp(flA,0.,1.)); }
+  col*=1.+uFA.x*mF*0.12;
+  col+=vec3(1.,.55,.2)*mF*max(uFA.x,0.)*0.04;
   for(int i=0;i<3;i++){
     vec2 gd=(p-uG[i].xy)/uG[i].z;
     float gm=exp(-dot(gd,gd)*2.2);
     col*=1.+uG[i].w*gm*(i==2?uFA.y:uGI);
   }
-  col+=add*0.22;
+  col+=add*0.16;
   gl_FragColor=vec4(col,1.);
 }`;
   const VS_PAGE = `
@@ -148,13 +155,17 @@ void main(){ vF=aUvF; vB=aUvB; vS=aShade; vA=aAlpha;
   gl_Position=vec4(aPos.x/uRes.x*2.-1., 1.-aPos.y/uRes.y*2., 0., 1.); }`;
   const FS_PAGE = `
 precision highp float;
-uniform sampler2D uTex; uniform float uMode; uniform float uFront;
+uniform sampler2D uTex; uniform sampler2D uMsk; uniform float uMode; uniform float uFront;
 varying vec2 vF; varying vec2 vB; varying vec2 vS; varying float vA;
 void main(){
-  if(uMode>0.5){ gl_FragColor=vec4(0.06,0.03,0.01,vA); return; }
+  float pm=texture2D(uMsk,vF).g;
+  if(uMode>0.5){ gl_FragColor=vec4(0.06,0.03,0.01,vA*pm); return; }
   bool fr = gl_FrontFacing == (uFront>0.5);
+  // front face = the right page; back face = what lands on the left (masked by the left page's shape)
+  float a = fr ? pm : texture2D(uMsk,vB).b;
+  if(a<0.01) discard;
   vec3 c = fr ? texture2D(uTex,vF).rgb*vS.x : texture2D(uTex,vB).rgb*vS.y*vec3(1.04,0.97,0.86);
-  gl_FragColor=vec4(c,vA);
+  gl_FragColor=vec4(c,vA*a);
 }`;
 
   function compile(gl, type, src) {
@@ -199,7 +210,7 @@ void main(){
 
       const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false, preserveDrawingBuffer: false });
       let alive = true, paused = false, raf = 0, t0 = performance.now(), tNow = 0, lastFrame = 0;
-      let mode = null, L = null, tex = null, texReady = false, imgCache = {};
+      let mode = null, L = null, tex = null, texNF = null, texM = null, texReady = false, imgCache = {};
       let map = { s: 1, ox: 0, oy: 0 }, fw = 1, fh = 1, dpr = 1;
       let progBase, progPage, bufFull, pageBuf = {}, idxBuf, idxCount = 0;
       const R = rnd(7);
@@ -240,7 +251,7 @@ void main(){
       }
 
       /* ---- bottles (DOM, above the photo; the page turns behind them) ---- */
-      let bottleEls = [];
+      let bottleEls = [], frontEl = null;
       function buildBottles() {
         bottleLayer.replaceChildren();
         bottleEls = L.bottles.map((b) => {
@@ -260,6 +271,15 @@ void main(){
           bottleLayer.appendChild(wrap);
           return { b, wrap, lightEl };
         });
+        frontEl = null;
+        if (L.front) {
+          frontEl = document.createElement('img');
+          frontEl.src = ctx.img(L.front.src);
+          frontEl.alt = '';
+          frontEl.decoding = 'async';
+          frontEl.style.cssText = 'position:absolute;display:block;pointer-events:none';
+          bottleLayer.appendChild(frontEl);
+        }
         placeBottles();
       }
       function placeBottles() {
@@ -270,6 +290,13 @@ void main(){
           wrap.style.width = w.toFixed(2) + 'px';
           wrap.style.height = h.toFixed(2) + 'px';
         });
+        if (frontEl && L.front) {
+          const [x, y, w, h] = L.front.box;
+          frontEl.style.left = (map.ox + x * map.s).toFixed(2) + 'px';
+          frontEl.style.top = (map.oy + y * map.s).toFixed(2) + 'px';
+          frontEl.style.width = (w * map.s).toFixed(2) + 'px';
+          frontEl.style.height = (h * map.s).toFixed(2) + 'px';
+        }
       }
 
       /* ---- layout / texture ---- */
@@ -294,16 +321,21 @@ void main(){
         const src = ctx.img(L.img);
         if (!gl) { root.style.backgroundImage = 'url("' + src + '")'; return; }
         const want = m;
-        loadImage(src).then((im) => {
-          if (!alive || mode !== want) return;
-          if (!tex) tex = gl.createTexture();
-          gl.bindTexture(gl.TEXTURE_2D, tex);
+        const up = (t, im) => {
+          gl.bindTexture(gl.TEXTURE_2D, t);
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+          gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        };
+        Promise.all([loadImage(src), loadImage(ctx.img(L.nf)), loadImage(ctx.img(L.mask))]).then(([im, nf, mk]) => {
+          if (!alive || mode !== want) return;
+          if (!tex) { tex = gl.createTexture(); texNF = gl.createTexture(); texM = gl.createTexture(); }
+          up(tex, im); up(texNF, nf); up(texM, mk);
           texReady = true;
           Hr = sq2quad(L.book.right); Hl = sq2quad(L.book.left);
           render(tNow);
@@ -334,8 +366,8 @@ void main(){
         return [sway, clamp(stretch, -0.16, 0.22), flick, glow];
       }
       function fireState(t) {
-        // slow, lazy flicker (the client asked for slow flames under the cauldron)
-        return 0.55 * Math.sin(t * 0.9) + 0.3 * Math.sin(t * 1.7 + 1.3) + 0.15 * Math.sin(t * 3.1 + 0.4);
+        // lazy flicker, a little livelier than before (client: same size, slightly faster)
+        return 0.55 * Math.sin(t * 1.4) + 0.3 * Math.sin(t * 2.6 + 1.3) + 0.15 * Math.sin(t * 4.7 + 0.4);
       }
 
       /* ---- page turn geometry ---- */
@@ -413,7 +445,13 @@ void main(){
         const U = (n) => gl.getUniformLocation(progBase, n);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texNF);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, texM);
         gl.uniform1i(U('uTex'), 0);
+        gl.uniform1i(U('uNF'), 1);
+        gl.uniform1i(U('uMsk'), 2);
         gl.uniform2f(U('uRes'), cv.width, cv.height);
         gl.uniform4f(U('uMap'), map.s * dpr, map.ox * dpr, map.oy * dpr, 0);
         gl.uniform2f(U('uImg'), L.w, L.h);
@@ -452,6 +490,7 @@ void main(){
           const P = (n) => gl.getUniformLocation(progPage, n);
           gl.uniform2f(P('uRes'), cv.width, cv.height);
           gl.uniform1i(P('uTex'), 0);
+          gl.uniform1i(P('uMsk'), 2);
           gl.uniform1f(P('uFront'), 1);
           gl.enable(gl.BLEND);
           gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -596,7 +635,7 @@ void main(){
           ro.disconnect();
           timers.forEach(clearTimeout);
           if (gl) {
-            try { gl.deleteTexture(tex); } catch (e) {}
+            try { [tex, texNF, texM].forEach((t) => t && gl.deleteTexture(t)); } catch (e) {}
             GAM.loseGL(gl);
           }
           frame.replaceChildren();

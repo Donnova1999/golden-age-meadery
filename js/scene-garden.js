@@ -4,7 +4,8 @@
    Layers inside the .mead-setting frame:
    1. <img> the baked photo (bottles composited in Python with shadows + glass-top reflection) — also the still/fallback.
    2. WebGL canvas: the same photo with motion applied to its real pixels —
-        • top-right vines, leaves and flowers sway in the breeze (displacement, anchored where they hang/grow),
+        • top-right vines, leaves and flowers move in the wind leaf by leaf: every leaf / flower (pre-segmented)
+          has its own flutter phases + a light branch sway and gusts that travel across the plants,
         • fountain water runs (flow-map animation on the water columns only) and the basin surface ripples,
         • the bottom-left flowers have no motion at all.
    3. 2D canvas: a few big real rose petals (cut from the photo) tumbling all the way down past the bottom edge.
@@ -14,8 +15,8 @@
   GAM.photoScenes = GAM.photoScenes || {};
 
   const COMP = {
-    d: { base: 'scene/md-base.webp', mask: 'scene/md-mask.png', w: 1376, h: 768, amp: 7.5 },
-    m: { base: 'scene/md-base-m.webp', mask: 'scene/md-mask-m.png', w: 768, h: 1376, amp: 6.5 },
+    d: { base: 'scene/md-base.webp', mask: 'scene/md-mask.png', la: 'scene/md-leaf-a.png', lb: 'scene/md-leaf-b.png', w: 1376, h: 768, sway: 1.5, leaf: 3.1 },
+    m: { base: 'scene/md-base-m.webp', mask: 'scene/md-mask-m.png', la: 'scene/md-leaf-a-m.png', lb: 'scene/md-leaf-b-m.png', w: 768, h: 1376, sway: 1.7, leaf: 4.0 },
   };
   // content rects of each petal in md-petals.webp (x, y, w, h)
   const PETALS = [[18, 4, 283, 192], [346, 4, 267, 192], [661, 4, 278, 192], [978, 4, 283, 192], [1301, 4, 278, 192]];
@@ -24,10 +25,11 @@
   const FS = [
     'precision highp float;',
     'varying vec2 v;',
-    'uniform sampler2D uImg,uMask;',
+    'uniform sampler2D uImg,uMask,uLeafA,uLeafB;',
     'uniform vec2 uSize;',       // image size in px
     'uniform vec4 uCrop;',       // uv offset.xy, uv scale.zw (cover crop)
-    'uniform float uT,uGust,uAmp;',
+    'uniform float uT,uGust,uSway,uLeaf;',
+    'uniform vec3 uW;',          // the three flutter frequencies (rad/s)
     'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
     ' return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}',
@@ -35,14 +37,29 @@
     ' vec2 uv=uCrop.xy+v*uCrop.zw;',
     ' vec3 m=texture2D(uMask,uv).rgb;',
     ' vec2 px=1./uSize;',
-    // breeze: low-frequency spatial phase so motion travels through the foliage like wind
-    ' float ph=n(uv*vec2(4.,3.2))*6.2831+uv.y*2.4-uv.x*1.3;',
     ' float t=uT;',
-    ' float s=sin(t*1.05+ph)*.52+sin(t*1.83+ph*1.62)*.27+sin(t*.43+ph*.71)*.38+sin(t*3.1+ph*2.3)*.07*uGust;',
-    ' float a=m.r*uAmp*(.5+.95*uGust);',
-    ' vec2 d=vec2(s+.35*uGust, .24*cos(t*1.52+ph*1.27))*a*px;',
-    ' vec2 q=uv-d;',
+    ' vec2 d=vec2(0.);',
+    ' float fx=0.;',
+    ' if(m.r>.002){',
+    // gusts travel across the plants: only the strength varies with position, not the direction of motion
+    '  float gl=uGust*(.72+.28*sin(t*.8-uv.x*5.5+uv.y*2.3));',
+    // light branch sway (small, slow) + the plants leaning a little into each gust
+    '  float ph=n(uv*vec2(4.,3.2))*6.2831+uv.y*2.4-uv.x*1.3;',
+    '  float s=sin(t*1.05+ph)*.5+sin(t*.43+ph*.71)*.35;',
+    '  d+=vec2(s*(.45+.7*gl)+.8*gl,.18*cos(t*1.3+ph))*uSway;',
+    // every leaf / flower flutters on its own: per-leaf phases baked into two smooth coefficient fields
+    '  vec4 A=texture2D(uLeafA,uv)*2.-1.; vec4 B=texture2D(uLeafB,uv)*2.-1.;',
+    '  vec3 w=uW*t;',
+    '  float s1=sin(w.x),c1=cos(w.x),s2=sin(w.y),c2=cos(w.y),s3=sin(w.z),c3=cos(w.z);',
+    '  fx=A.r*s1+A.g*c1+A.b*s2+A.a*c2+B.r*s3+B.g*c3;',
+    '  float fy=B.b*s2+B.a*c2;',
+    '  d+=vec2(fx,fy*.75)*uLeaf*1.6*(.32+1.25*gl);',
+    '  d*=m.r;',
+    ' }',
+    ' vec2 q=uv-d*px;',
     ' vec3 c=texture2D(uImg,q).rgb;',
+    // leaves catch the light differently as they turn
+    ' c*=1.+.07*fx*m.r*(.5+uGust);',
     // fountain streams: two-phase flow along +y (content moves down), with a glint that rides the water
     ' if(m.g>.004){',
     '  float r=t*2.6; float f1=fract(r), f2=fract(r+.5); float L=26.*px.y;',
@@ -54,9 +71,9 @@
     ' }',
     // basin surface: small travelling ripples and shimmer
     ' if(m.b>.004){',
-    '  float w=sin(q.y*uSize.y*.85-t*2.7+q.x*uSize.x*.045)*.6+sin(q.x*uSize.x*.11+t*1.9)*.4;',
-    '  vec3 rc=texture2D(uImg,q+vec2(w*1.4,w*.5)*px).rgb;',
-    '  rc*=1.+.07*w;',
+    '  float w2=sin(q.y*uSize.y*.85-t*2.7+q.x*uSize.x*.045)*.6+sin(q.x*uSize.x*.11+t*1.9)*.4;',
+    '  vec3 rc=texture2D(uImg,q+vec2(w2*1.4,w2*.5)*px).rgb;',
+    '  rc*=1.+.07*w2;',
     '  c=mix(c,rc,m.b);',
     ' }',
     ' gl_FragColor=vec4(c,1.);',
@@ -122,21 +139,26 @@
           const loc = gl.getAttribLocation(prog, 'p');
           gl.enableVertexAttribArray(loc);
           gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-          ['uImg', 'uMask', 'uSize', 'uCrop', 'uT', 'uGust', 'uAmp'].forEach((k) => (U[k] = gl.getUniformLocation(prog, k)));
+          ['uImg', 'uMask', 'uLeafA', 'uLeafB', 'uSize', 'uCrop', 'uT', 'uGust', 'uSway', 'uLeaf', 'uW'].forEach((k) => (U[k] = gl.getUniformLocation(prog, k)));
           gl.uniform1i(U.uImg, 0);
           gl.uniform1i(U.uMask, 1);
+          gl.uniform1i(U.uLeafA, 2);
+          gl.uniform1i(U.uLeafB, 3);
+          gl.uniform3f(U.uW, 2.1, 3.4, 5.3);
         } catch (e) {
           console.warn('garden scene: WebGL unavailable', e);
           GAM.loseGL(gl);
           gl = null;
         }
       }
-      function tex(img) {
+      function tex(img, rgba) {
         const t = gl.createTexture();
+        const f = rgba ? gl.RGBA : gl.RGB;
         gl.bindTexture(gl.TEXTURE_2D, t);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+        gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, f, f, gl.UNSIGNED_BYTE, img);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -147,13 +169,16 @@
         if (cache[key]) return cache[key].ready;
         const c = (cache[key] = {});
         const C = COMP[key];
-        c.ready = Promise.all([loadImg(ctx.img(C.base)), gl ? loadImg(ctx.img(C.mask)) : Promise.resolve(null)]).then(([b, m]) => {
+        const opt = (src) => (gl ? loadImg(ctx.img(src)) : Promise.resolve(null));
+        c.ready = Promise.all([loadImg(ctx.img(C.base)), opt(C.mask), opt(C.la), opt(C.lb)]).then(([b, m, la, lb]) => {
           if (!alive) return c;
           c.base = b;
           c.mask = m;
-          if (gl && m) {
+          if (gl && m && la && lb) {
             c.texBase = tex(b);
             c.texMask = tex(m);
+            c.texLA = tex(la, true);
+            c.texLB = tex(lb, true);
           }
           return c;
         });
@@ -176,22 +201,21 @@
       loadImg(ctx.img('scene/md-petals.webp')).then((i) => { sheet = i; }).catch(() => {});
       function spawn(p, initial) {
         const mob = comp === 'm';
-        const base = mob ? W * rnd(0.11, 0.15) : W * rnd(0.04, 0.056);
-        p.size = base;
         p.near = Math.random() < 0.18;
-        if (p.near) p.size *= 1.35;
-        p.x = rnd(-0.08, 0.92) * W;
-        p.y = initial ? rnd(-0.35, 0.85) * H : -p.size * rnd(1.2, 3.5);
-        p.vy = (H / rnd(9.5, 14)) * (p.near ? 1.25 : 1);
-        p.drift = rnd(8, 22) * (W / 1440) * (mob ? 1.8 : 1);
-        p.wobA = rnd(14, 34) * (W / 1440) * (mob ? 1.6 : 1);
-        p.wobF = rnd(0.35, 0.8);
+        p.size = (mob ? W * rnd(0.11, 0.15) : W * rnd(0.04, 0.056)) * (p.near ? 1.35 : 1);
+        p.x0 = rnd(-0.05, 0.95) * W;
+        p.y = initial ? rnd(-0.3, 0.9) * H : -p.size * rnd(1.0, 2.6);
+        p.vy = (H / rnd(10, 14)) * (p.near ? 1.2 : 1); // px per second
+        p.swayA = rnd(0.018, 0.045) * W * (mob ? 1.5 : 1); // side-to-side swing of a falling petal
+        p.swayW = rnd(0.9, 1.5);
         p.ph = rnd(0, 6.28);
-        p.rot = rnd(0, 6.28);
-        p.spin = rnd(-0.9, 0.9);
-        p.flip = rnd(0, 6.28);
-        p.flipV = rnd(0.45, 1.1) * (Math.random() < 0.5 ? -1 : 1);
-        p.tilt = rnd(0, 6.28);
+        p.drift = rnd(6, 18) * (W / 1440) * (mob ? 1.8 : 1);
+        p.rot0 = rnd(0, 6.28);
+        p.spin = rnd(-0.22, 0.22);
+        p.tiltA = rnd(0.3, 0.55); // gentle 3D rocking: width never drops below ~85%
+        p.tiltW = rnd(1.3, 2.2);
+        p.tph = rnd(0, 6.28);
+        p.age = 0;
         p.spr = (Math.random() * PETALS.length) | 0;
       }
       function initPetals() {
@@ -200,31 +224,30 @@
         const n = comp === 'm' ? 5 : 6;
         for (let i = 0; i < n; i++) { const p = {}; spawn(p, true); petals.push(p); }
       }
-      function drawPetals(dt, t) {
+      function drawPetals(dt) {
         const dpr = pc.width / W;
         pctx.setTransform(1, 0, 0, 1, 0, 0);
         pctx.clearRect(0, 0, pc.width, pc.height);
         if (!sheet) return;
         const wind = 0.6 + gust * 1.4;
         for (const p of petals) {
-          p.y += p.vy * dt * (0.9 + gust * 0.25);
-          p.x += (p.drift * wind + Math.sin(t * p.wobF + p.ph) * p.wobA) * dt;
-          p.rot += p.spin * dt * (0.7 + gust);
-          p.flip += p.flipV * dt;
-          p.tilt += dt * 0.8;
-          if (p.y - p.size > H) spawn(p, false); // only after it has left the bottom edge
+          p.age += dt;
+          const sw = p.swayW * p.age + p.ph;
+          // falls a touch slower at the ends of each swing, never stops
+          p.y += p.vy * dt * (0.9 + 0.14 * Math.cos(sw) * Math.cos(sw)) * (0.92 + gust * 0.2);
+          p.x0 += p.drift * wind * dt;
+          if (p.y - p.size > H) { spawn(p, false); continue; } // only after it has left the bottom edge
+          const x = p.x0 + Math.sin(sw) * p.swayA;
+          const rot = p.rot0 + p.spin * p.age + 0.32 * Math.cos(sw); // tilts into the direction of the swing
+          const sx = Math.cos(p.tiltA * Math.sin(p.tiltW * p.age + p.tph));
+          const sy = 0.9 + 0.1 * Math.cos(p.tiltW * 0.63 * p.age + p.tph);
           const r = PETALS[p.spr];
           const w = p.size, h = (p.size * r[3]) / r[2];
-          let sx = Math.cos(p.flip);
-          sx = Math.sign(sx || 1) * Math.max(0.58, Math.abs(sx)); // always broad: no sliver-sized petals
-          const sy = 0.84 + 0.16 * Math.cos(p.tilt);
-          pctx.setTransform(dpr, 0, 0, dpr, p.x * dpr, p.y * dpr);
-          pctx.rotate(p.rot);
+          pctx.setTransform(dpr, 0, 0, dpr, x * dpr, p.y * dpr);
+          pctx.rotate(rot);
           pctx.scale(sx, sy);
-          pctx.globalAlpha = sx < 0 ? 0.9 : 0.97;
-          if (p.near) pctx.filter = 'blur(0.8px)';
+          pctx.globalAlpha = 0.97;
           pctx.drawImage(sheet, r[0], r[1], r[2], r[3], -w / 2, -h / 2, w, h);
-          if (p.near) pctx.filter = 'none';
         }
         pctx.globalAlpha = 1;
       }
@@ -253,8 +276,13 @@
               gl.bindTexture(gl.TEXTURE_2D, c.texBase);
               gl.activeTexture(gl.TEXTURE1);
               gl.bindTexture(gl.TEXTURE_2D, c.texMask);
+              gl.activeTexture(gl.TEXTURE2);
+              gl.bindTexture(gl.TEXTURE_2D, c.texLA);
+              gl.activeTexture(gl.TEXTURE3);
+              gl.bindTexture(gl.TEXTURE_2D, c.texLB);
               gl.uniform2f(U.uSize, COMP[key].w, COMP[key].h);
-              gl.uniform1f(U.uAmp, COMP[key].amp);
+              gl.uniform1f(U.uSway, COMP[key].sway);
+              gl.uniform1f(U.uLeaf, COMP[key].leaf);
               draw(simT);
               glc.style.opacity = '1';
             }
@@ -353,7 +381,7 @@
         simT += dt;
         updateGust(simT);
         draw(simT);
-        drawPetals(dt, simT);
+        drawPetals(dt);
         soundTick(simT);
       }
       const onVis = () => { hidden = document.hidden; last = performance.now(); };
@@ -375,7 +403,7 @@
           ro.disconnect();
           document.removeEventListener('visibilitychange', onVis);
           if (gl) {
-            Object.values(cache).forEach((c) => { try { c.texBase && gl.deleteTexture(c.texBase); c.texMask && gl.deleteTexture(c.texMask); } catch (e) {} });
+            Object.values(cache).forEach((c) => { try { ['texBase', 'texMask', 'texLA', 'texLB'].forEach((k) => c[k] && gl.deleteTexture(c[k])); } catch (e) {} });
             GAM.loseGL(gl);
           }
           gl = null;

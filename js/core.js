@@ -108,8 +108,8 @@
       stage,
       base: GAM.base,
       reducedMotion: GAM.reducedMotion,
-      img: (name) => GAM.base + name,
-      media: (name) => GAM.mediaBase + name,
+      img: (name) => GAM.base + name + (window.GAM_BUILD ? '?v=' + window.GAM_BUILD : ''),
+      media: (name) => GAM.mediaBase + name + (window.GAM_BUILD ? '?v=' + window.GAM_BUILD : ''),
       /** Register an ambient sound graph. fn(ac, out) builds nodes into `out` and returns a cleanup fn.
           Called immediately if sound is on, otherwise the first time the visitor turns sound on. */
       onSound(fn) { soundBuilders.push({ fn, started: false, cleanup: null }); runBuilders(); },
