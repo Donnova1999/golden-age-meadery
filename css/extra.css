@@ -1,0 +1,74 @@
+/* Additions on top of the wellnwomen.site stylesheet (wnw.css). */
+html, body { background: #161513; }
+.mead-home { min-height: 100vh; }
+
+/* page transition veil */
+.gam-veil { position: fixed; inset: 0; z-index: 90; background: #161513; opacity: 0; visibility: hidden; transition: opacity .32s ease, visibility .32s; display: grid; place-items: center; }
+.gam-veil.on { opacity: 1; visibility: visible; }
+.gam-veil img { width: 74px; height: 74px; opacity: .85; animation: gamBreathe 1.6s ease-in-out infinite; }
+@keyframes gamBreathe { 50% { transform: scale(1.06); opacity: .55; } }
+
+/* toast */
+.gam-toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); z-index: 95; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  transition: opacity .3s, transform .3s; display: flex; gap: 14px; align-items: center; padding: 14px 18px; max-width: calc(100vw - 32px);
+  background: #22201c; color: #f3ead6; border: 1px solid rgba(214, 186, 128, .35); box-shadow: 0 14px 40px rgba(0,0,0,.45); font: 500 14px/1.4 Manrope, system-ui, sans-serif; }
+.gam-toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.gam-toast a { color: #d9bf86; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* cart badge count (wellnwomen styles .ga-cart span) */
+.ga-cart span[hidden] { display: none !important; }
+
+/* farm photo grid (Miki's 13 photos, 19 Oct) */
+.gam-farm { max-width: 1240px; margin: 0 auto; padding: 0 5% 96px; }
+.gam-farm-day { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px 48px; padding: 44px 0; border-top: 1px solid var(--border); }
+.gam-farm-date { font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif); }
+.gam-farm-date b { display: block; font-weight: 400; font-size: 54px; line-height: .9; color: var(--primary); }
+.gam-farm-date span { display: block; margin-top: 8px; font: 500 11px/1.4 var(--font-sans, Manrope, sans-serif); letter-spacing: .22em; text-transform: uppercase; opacity: .75; }
+.gam-farm-date em { display: block; margin-top: 14px; font-size: 24px; }
+.gam-farm-shots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.gam-farm-shots figure { margin: 0; grid-column: span 3; }
+.gam-farm-shots figure.w { grid-column: span 6; }
+.gam-farm-shots figure.p { grid-column: span 2; }
+.gam-farm-shots button { all: unset; display: block; width: 100%; cursor: zoom-in; }
+.gam-farm-shots button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.gam-farm-shots img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+.gam-farm-shots figure.p img { aspect-ratio: 9/16; }
+.gam-farm-shots figcaption { padding-top: 8px; font-style: italic; font-size: 15px; opacity: .78; font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif); }
+@media (max-width: 760px) {
+  .gam-farm-day { grid-template-columns: 1fr; }
+  .gam-farm-shots figure, .gam-farm-shots figure.w { grid-column: span 6; }
+  .gam-farm-shots figure.p { grid-column: span 3; }
+}
+.gam-lb { position: fixed; inset: 0; z-index: 92; background: rgba(8, 7, 6, .96); display: grid; grid-template-rows: 1fr auto; padding: 56px 16px 20px; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+.gam-lb.open { opacity: 1; visibility: visible; }
+.gam-lb img { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; min-height: 0; }
+.gam-lb-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; color: #f3ead6; }
+.gam-lb-bar p { margin: 0; flex: 1; text-align: center; font-style: italic; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 18px; }
+.gam-lb button { background: none; border: 1px solid rgba(214, 186, 128, .4); color: #f3ead6; width: 42px; height: 42px; cursor: pointer; font-size: 18px; }
+.gam-lb-close { position: absolute; top: 10px; right: 12px; }
+
+/* cart page */
+.gam-cart { max-width: 860px; margin: 0 auto; padding: 0 5% 110px; }
+.gam-cart ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+.gam-cart li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--border); }
+.gam-cart li img { width: 64px; height: 96px; object-fit: contain; }
+.gam-cart h3 { margin: 0 0 6px; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 26px; }
+.gam-cart .gam-line { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+.gam-cart .gam-qty { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: 1px solid var(--border); }
+.gam-cart .gam-qty button { background: none; border: 0; color: inherit; width: 34px; height: 34px; cursor: pointer; font-size: 18px; }
+.gam-cart .gam-qty output { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; }
+.gam-cart .gam-price { font-variant-numeric: tabular-nums; font-size: 18px; text-align: right; }
+.gam-cart .gam-remove { display: block; margin-top: 8px; background: none; border: 0; color: inherit; opacity: .65; text-decoration: underline; cursor: pointer; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.gam-cart-total { display: flex; justify-content: space-between; align-items: baseline; padding: 26px 0 8px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; }
+.gam-cart-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; margin-top: 18px; }
+.gam-cart-note { opacity: .7; font-size: 14px; text-align: right; margin-top: 12px; }
+.gam-cart-empty { text-align: center; padding: 40px 0 10px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-style: italic; opacity: .85; }
+
+/* contact thank-you */
+.gam-thanks { max-width: 640px; margin: 0 auto; padding: 36px; border: 1px solid var(--border); text-align: center; }
+.gam-thanks h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 38px; margin: 0 0 10px; }
+.gam-thanks p { opacity: .8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gam-veil, .gam-toast { transition: none; }
+}
