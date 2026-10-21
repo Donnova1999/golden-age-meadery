@@ -12,12 +12,15 @@
   const LAYOUT = {
     desk: {
       img: 'scene/al-bg.webp', nf: 'scene/al-nf.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
-      front: { src: 'scene/al-front.webp', box: [799, 555, 269, 87] },
+      front: { src: 'scene/al-front.webp', box: [1050, 499, 251, 115] },
       bottles: [
         { src: 'scene/al-200.webp', cx: 846, base: 590, h: 345.9, ar: 233 / 1526, lit: 0.9 },
         { src: 'scene/al-750.webp', cx: 925, base: 575, h: 400, ar: 319 / 1500, lit: 1 },
       ],
       fire: { x: 286, y: 482, rx: 84, ry: 64 },
+      // real fireplace flames (video) mapped under the cauldron, same size as the photo's fire
+      fireVid: { src: 'hf-loop.webm', x: 226 - 380 * 0.62, y: 515 - 235 * 0.44, w: 960 * 0.62, h: 540 * 0.44 },
+      wisps: { x0: 215, x1: 395, y: 248, w: 16, rate: 3.2, rise: 22 },
       steam: [{ x: 282, y: 172, rx: 88, ry: 84 }],
       glows: [{ x: 290, y: 468, r: 290, k: 0.08 }, { x: 302, y: 628, r: 125, k: 0.16 }, { x: 1131, y: 60, r: 170, k: 0.07 }],
       candles: [
@@ -78,7 +81,8 @@
   const VS_FULL = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   const FS_BASE = `
 precision highp float;
-uniform sampler2D uTex; uniform sampler2D uNF; uniform sampler2D uMsk; uniform vec2 uRes; uniform vec4 uMap; uniform vec2 uImg; uniform float uTime;
+uniform sampler2D uTex; uniform sampler2D uNF; uniform sampler2D uMsk; uniform sampler2D uVid; uniform vec4 uVR; uniform float uVOn;
+uniform vec2 uRes; uniform vec4 uMap; uniform vec2 uImg; uniform float uTime;
 uniform vec4 uC[10]; uniform vec4 uCA[10]; uniform int uNC;
 uniform vec4 uF; uniform vec3 uFA;
 uniform vec4 uS[3]; uniform int uNS;
@@ -121,22 +125,27 @@ void main(){
   float n1=noise(p*0.045+vec2(0.,-uTime*0.55))-0.5;
   vec2 fv=vec2(n1*0.7,1.)*13.;
   vec2 o1=fv*(a1-0.5)*mF, o2=fv*(a2-0.5)*mF;
-  float fireA=mF*flameA(p);
+  float fireA=uVOn>0.5 ? flameA(p)*(1.-step(1.25,length(fd))) : mF*flameA(p);
   vec2 s1o=vec2(0.), s2o=vec2(0.); float sw=0.5;
   float mS=0.;
   for(int i=0;i<3;i++){
     if(i>=uNS) break;
     vec2 sd=(p-uS[i].xy)/uS[i].zw;
     float m=1.-smoothstep(0.45,1.,length(sd));
-    float n2=noise(p*0.02+vec2(uTime*0.05,-uTime*0.12))-0.5;
-    float s1=fract(uTime*0.07+float(i)*0.31), s2=fract(uTime*0.07+float(i)*0.31+0.5);
-    vec2 sv=vec2(n2*1.4,1.)*24.;
+    float n2=noise(p*0.02+vec2(uTime*0.09,-uTime*0.2))-0.5;
+    float s1=fract(uTime*0.13+float(i)*0.31), s2=fract(uTime*0.13+float(i)*0.31+0.5);
+    vec2 sv=vec2(n2*1.7,1.)*34.;
     s1o+=sv*(s1-0.5)*m; s2o+=sv*(s2-0.5)*m;
     if(m>mS){ mS=m; sw=1.-abs(2.*s1-1.); }
   }
   vec3 col=texNF(p);
   if(mS>0.001){ col=texNF(p+s1o)*sw+texNF(p+s2o)*(1.-sw); }
-  if(fireA>0.001){ vec3 fl=tex(p+o1)*w1+tex(p+o2)*(1.-w1); col=mix(col,fl,clamp(fireA,0.,1.)); }
+  if(fireA>0.001){
+    if(uVOn>0.5){
+      vec3 vc=texture2D(uVid,clamp((p-uVR.xy)/uVR.zw,vec2(0.001),vec2(0.999))).rgb*1.06;
+      col=mix(col,1.-(1.-col)*(1.-vc),clamp(fireA,0.,1.));
+    } else { vec3 fl=tex(p+o1)*w1+tex(p+o2)*(1.-w1); col=mix(col,fl,clamp(fireA,0.,1.)); }
+  }
   if(flA>0.001){ vec3 fc=tex(qc)*(1.+bright*0.35); col=mix(col,fc,clamp(flA,0.,1.)); }
   col*=1.+uFA.x*mF*0.12;
   col+=vec3(1.,.55,.2)*mF*max(uFA.x,0.)*0.04;
@@ -210,7 +219,7 @@ void main(){
 
       const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false, preserveDrawingBuffer: false });
       let alive = true, paused = false, raf = 0, t0 = performance.now(), tNow = 0, lastFrame = 0;
-      let mode = null, L = null, tex = null, texNF = null, texM = null, texReady = false, imgCache = {};
+      let mode = null, L = null, tex = null, texNF = null, texM = null, texV = null, vid = null, vidReady = false, texReady = false, imgCache = {};
       let map = { s: 1, ox: 0, oy: 0 }, fw = 1, fh = 1, dpr = 1;
       let progBase, progPage, bufFull, pageBuf = {}, idxBuf, idxCount = 0;
       const R = rnd(7);
@@ -332,6 +341,7 @@ void main(){
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         };
+        setupVideo();
         Promise.all([loadImage(src), loadImage(ctx.img(L.nf)), loadImage(ctx.img(L.mask))]).then(([im, nf, mk]) => {
           if (!alive || mode !== want) return;
           if (!tex) { tex = gl.createTexture(); texNF = gl.createTexture(); texM = gl.createTexture(); }
@@ -340,6 +350,29 @@ void main(){
           Hr = sq2quad(L.book.right); Hl = sq2quad(L.book.left);
           render(tNow);
         }).catch(() => {});
+      }
+      function setupVideo() {
+        vidReady = false;
+        if (vid) { try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch (e) {} vid.remove(); vid = null; }
+        if (!gl || reduced || !L.fireVid) return;
+        vid = document.createElement('video');
+        vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'auto';
+        vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('aria-hidden', 'true');
+        vid.style.cssText = 'position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+        vid.src = ctx.media(L.fireVid.src);
+        vid.addEventListener('loadeddata', () => { vidReady = true; if (!paused && !document.hidden) vid.play().catch(() => {}); });
+        root.appendChild(vid);
+        if (!texV) texV = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texV);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      }
+      function syncVid() {
+        if (!vid) return;
+        if (paused || document.hidden) vid.pause(); else if (vidReady) vid.play().catch(() => {});
       }
       function resize() {
         const m = chooseMode();
@@ -452,6 +485,17 @@ void main(){
         gl.uniform1i(U('uTex'), 0);
         gl.uniform1i(U('uNF'), 1);
         gl.uniform1i(U('uMsk'), 2);
+        const vOn = !!(vid && vidReady && L.fireVid && motion);
+        if (vOn) {
+          gl.activeTexture(gl.TEXTURE3);
+          gl.bindTexture(gl.TEXTURE_2D, texV);
+          try { gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, vid); } catch (e) {}
+          gl.uniform1i(U('uVid'), 3);
+          const v = L.fireVid;
+          gl.uniform4f(U('uVR'), v.x, v.y, v.w, v.h);
+        }
+        gl.uniform1f(U('uVOn'), vOn ? 1 : 0);
+        gl.activeTexture(gl.TEXTURE0);
         gl.uniform2f(U('uRes'), cv.width, cv.height);
         gl.uniform4f(U('uMap'), map.s * dpr, map.ox * dpr, map.oy * dpr, 0);
         gl.uniform2f(U('uImg'), L.w, L.h);
@@ -516,7 +560,7 @@ void main(){
       }
 
       /* ---- candle smoke (2D overlay) ---- */
-      const smoke = [];
+      const smoke = [], wisps = [];
       function drawSmoke(t, dt) {
         const W = fx.width, H = fx.height, k = W / fw;
         fxc.clearRect(0, 0, W, H);
@@ -525,6 +569,27 @@ void main(){
           if (i > 3) return; // only the nearer candles smoke visibly
           if (Math.random() < dt * 2.2) smoke.push({ i, x: c.x, y: c.tip - 2, age: 0, life: 3.2 + Math.random() * 2, ph: Math.random() * 6.28, w: c.w });
         });
+        const wp = L.wisps;
+        if (wp) {
+          if (Math.random() < dt * wp.rate) wisps.push({ x: wp.x0 + Math.random() * (wp.x1 - wp.x0), y: wp.y, age: 0, life: 5 + Math.random() * 2.5, ph: Math.random() * 6.28, sp: 0.8 + Math.random() * 0.5 });
+          for (let n = wisps.length - 1; n >= 0; n--) {
+            const s = wisps[n];
+            s.age += dt;
+            if (s.age > s.life || wisps.length > 40) { wisps.splice(n, 1); continue; }
+            const a = s.age / s.life;
+            const y = s.y - s.age * wp.rise * s.sp - a * a * 30;
+            const x = s.x + Math.sin(s.age * 0.9 + s.ph) * (4 + a * 22) + Math.sin(s.age * 2.3 + s.ph * 2) * 3 + a * 14;
+            const px = (map.ox + x * map.s) * k, py = (map.oy + y * map.s) * k;
+            const r = (wp.w * (0.6 + a * 2.6)) * map.s * k;
+            const al = 0.13 * Math.sin(Math.PI * Math.min(1, a * 1.25)) * Math.pow(1 - a, 0.6);
+            const g = fxc.createRadialGradient(px, py, 0, px, py, Math.max(0.001, r));
+            g.addColorStop(0, 'rgba(232,224,212,' + al.toFixed(3) + ')');
+            g.addColorStop(0.55, 'rgba(225,215,200,' + (al * 0.45).toFixed(3) + ')');
+            g.addColorStop(1, 'rgba(225,215,200,0)');
+            fxc.fillStyle = g;
+            fxc.beginPath(); fxc.ellipse(px, py, r, r * 1.25, 0, 0, 6.283); fxc.fill();
+          }
+        }
         for (let n = smoke.length - 1; n >= 0; n--) {
           const s = smoke[n];
           s.age += dt;
@@ -620,6 +685,7 @@ void main(){
         return () => { stopped = true; nodes.forEach((n) => { try { n.stop(); } catch (e) {} }); };
       });
 
+      document.addEventListener('visibilitychange', syncVid);
       /* ---- start ---- */
       const ro = new ResizeObserver(() => resize());
       ro.observe(frame);
@@ -628,14 +694,16 @@ void main(){
       else { const id = setTimeout(() => render(0), 60); timers.push(id); }
 
       return {
-        setPaused(p) { paused = !!p; if (!paused) lastFrame = 0; },
+        setPaused(p) { paused = !!p; if (!paused) lastFrame = 0; syncVid(); },
         destroy() {
           alive = false;
           cancelAnimationFrame(raf);
           ro.disconnect();
+          document.removeEventListener('visibilitychange', syncVid);
+          if (vid) { try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch (e) {} vid = null; }
           timers.forEach(clearTimeout);
           if (gl) {
-            try { [tex, texNF, texM].forEach((t) => t && gl.deleteTexture(t)); } catch (e) {}
+            try { [tex, texNF, texM, texV].forEach((t) => t && gl.deleteTexture(t)); } catch (e) {}
             GAM.loseGL(gl);
           }
           frame.replaceChildren();

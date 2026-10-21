@@ -156,8 +156,8 @@
   function initHome(cleanups) {
     const home = $('.mead-home', root);
     let paused = false;
-    const fire = heroFire($('.mead-scene-canvas', root), () => paused);
-    cleanups.push(() => fire.destroy());
+    // the hero now shows the farm photograph (client, 21 Oct) instead of the animated fire
+    const fire = { destroy() {}, kick() {} };
     $$('button', $('.mead-hero', root)).forEach((b) => {
       const t = b.textContent.trim();
       if (/Explore our meads/.test(t)) b.onclick = () => scrollToId('collection');
@@ -390,7 +390,7 @@
     const t = tpl('t-' + route);
     const meta = JSON.parse(t.dataset.meta || '{}');
     const attrs = Object.entries(meta.attrs || {}).map(([k, v]) => ` ${k}="${esc(v)}"`).join('');
-    const inner = `<div class="mead-home" data-motion="playing"${attrs}>${HEADER}<main>${t.innerHTML}</main>${FOOTER}</div>`;
+    const inner = `<div class="mead-home" data-motion="playing" data-route="${route}"${attrs}>${HEADER}<main>${t.innerHTML}</main>${FOOTER}</div>`;
     root.innerHTML = meta.luxury ? `<div class="mead-luxury">${inner}</div>` : inner;
     const cleanups = [];
     current = { route, cleanups };
