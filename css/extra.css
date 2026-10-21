@@ -75,7 +75,7 @@ html, body { background: #161513; }
 
 /* ---------- page photographs (client, 21 Oct) ---------- */
 /* Home: the farm in autumn behind the hero */
-.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610211530) 50% 58%/cover no-repeat}
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610211830) 50% 58%/cover no-repeat}
 .mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
 .mead-home[data-route=home] .mead-hero-shade{background:
   linear-gradient(90deg,rgba(10,8,6,.86) 0%,rgba(10,8,6,.72) 28%,rgba(10,8,6,.30) 52%,rgba(10,8,6,0) 70%),
@@ -91,11 +91,11 @@ html, body { background: #161513; }
 .mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
 .mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
 .mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
-.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610211530);background-position:60% 42%}
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610211830);background-position:60% 42%}
 .mead-home[data-route=store]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
-.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610211530);background-position:50% 40%}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610211830);background-position:50% 40%}
 .mead-home[data-route=contact]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
@@ -105,8 +105,46 @@ html, body { background: #161513; }
 .mead-home[data-route=store] .mead-product-image{background:transparent}
 .mead-home[data-route=contact] .mead-form{background:rgba(14,11,8,.62);-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);border:1px solid rgba(255,236,200,.10);padding:34px 34px 38px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
 @media (max-width:760px){
-  .mead-home[data-route=store]>main:before{background-position:70% 40%}
+  /* phone: show the whole photo across the top of the page (no heavy crop), then fade into the page */
+  .mead-home[data-route=store]>main:before{background-size:100% auto;background-position:50% 0}
+  .mead-home[data-route=store]>main:after{background:
+    linear-gradient(90deg,rgba(10,8,6,.45) 0%,rgba(10,8,6,.12) 60%,rgba(10,8,6,0) 100%),
+    linear-gradient(180deg,rgba(10,8,6,.25) 0,rgba(10,8,6,0) 18vw,rgba(10,8,6,0) 52vw,var(--background) 76vw,var(--background) 100%)}
   .mead-home[data-route=contact]>main:before{background-position:50% 30%}
   .mead-home[data-route=contact] .mead-form{padding:24px 20px 28px}
   .mead-home[data-route=store] .mead-product{padding:18px 16px 22px}
+}
+
+/* ---------- 19+ age check (client, 21 Oct) ---------- */
+html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
+.gam-age { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 16px; background: #0e0c0a; overflow: auto;
+  transition: opacity .45s ease, visibility .45s; }
+.gam-age.out { opacity: 0; visibility: hidden; }
+.gam-age::before { content: ""; position: absolute; inset: -40px; background: url(../img/bg-home.webp?v=202610211830) 50% 55% / cover no-repeat;
+  filter: blur(14px) brightness(.5) saturate(1.1); transform: scale(1.04); }
+.gam-age::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
+.gam-age-card { position: relative; z-index: 1; width: min(460px, 100%); text-align: center; padding: 40px 34px 28px; color: #f3ead6;
+  background: rgba(18,15,12,.74); border: 1px solid rgba(214,186,128,.28); box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font: 400 14px/1.6 Manrope, system-ui, sans-serif; }
+.gam-age-logo { width: 104px; height: 104px; display: block; margin: 0 auto 18px; }
+.gam-age-eyebrow { margin: 0 0 22px; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: #d9bf86; }
+.gam-age h2 { margin: 0 0 12px; font: 400 40px/1.1 "Cormorant Garamond", Georgia, serif; color: #f6efe1; }
+.gam-age p { margin: 0 auto; max-width: 340px; color: #cfc3ad; }
+.gam-age-btns { display: flex; gap: 12px; justify-content: center; margin: 28px 0 6px; }
+.gam-age-btns button { min-width: 132px; height: 48px; padding: 0 22px; cursor: pointer; font: 600 12px/1 Manrope, system-ui, sans-serif;
+  letter-spacing: .2em; text-transform: uppercase; transition: background .2s, color .2s, border-color .2s; }
+.gam-age-yes { background: #d6ba80; color: #1a1712; border: 1px solid #d6ba80; }
+.gam-age-yes:hover { background: #e4cb95; border-color: #e4cb95; }
+.gam-age-no { background: transparent; color: #f3ead6; border: 1px solid rgba(243,234,214,.45); }
+.gam-age-no:hover { border-color: #f3ead6; background: rgba(243,234,214,.06); }
+.gam-age button:focus-visible { outline: 2px solid #f3ead6; outline-offset: 3px; }
+.gam-age-sorry p { margin-bottom: 22px; }
+.gam-age-link { background: none; border: 0; padding: 6px 4px; cursor: pointer; color: #d9bf86; font: 500 13px/1.4 Manrope, system-ui, sans-serif;
+  text-decoration: underline; text-underline-offset: 3px; }
+.gam-age-fine { margin-top: 26px !important; padding-top: 18px; border-top: 1px solid rgba(214,186,128,.18); font-size: 11px; letter-spacing: .06em; color: #a99d88 !important; }
+@media (max-width: 480px) {
+  .gam-age-card { padding: 32px 22px 22px; }
+  .gam-age h2 { font-size: 32px; }
+  .gam-age-logo { width: 88px; height: 88px; }
+  .gam-age-btns button { min-width: 0; flex: 1; }
 }
