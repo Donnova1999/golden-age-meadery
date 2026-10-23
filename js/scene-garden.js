@@ -16,7 +16,8 @@
 
   const COMP = {
     d: { base: 'scene/md-base.webp', mask: 'scene/md-mask.png', la: 'scene/md-leaf-a.png', lb: 'scene/md-leaf-b.png', w: 1376, h: 768, sway: 1.5, leaf: 3.1 },
-    m: { base: 'scene/md-base-m.webp', mask: 'scene/md-mask-m.png', la: 'scene/md-leaf-a-m.png', lb: 'scene/md-leaf-b-m.png', w: 768, h: 1376, sway: 1.7, leaf: 4.0 },
+    // tall (phone, and desktop beside the story): Miki's realistic garden picture with the real bottles (client 23 Oct)
+    m: { base: 'scene/md-real-m.webp', mask: 'scene/md-real-mask-m.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4 },
   };
   // content rects of each petal in md-petals.webp (x, y, w, h)
   const PETALS = [[18, 4, 283, 192], [346, 4, 267, 192], [661, 4, 278, 192], [978, 4, 283, 192], [1301, 4, 278, 192]];
@@ -202,7 +203,7 @@
       function spawn(p, initial) {
         const mob = comp === 'm';
         p.near = Math.random() < 0.18;
-        p.size = (mob ? W * rnd(0.11, 0.15) : W * rnd(0.04, 0.056)) * (p.near ? 1.35 : 1);
+        p.size = (mob ? W * rnd(0.075, 0.1) : W * rnd(0.04, 0.056)) * (p.near ? 1.35 : 1);
         p.x0 = rnd(-0.05, 0.95) * W;
         p.y = initial ? rnd(-0.3, 0.9) * H : -p.size * rnd(1.0, 2.6);
         p.vy = (H / rnd(10, 14)) * (p.near ? 1.2 : 1); // px per second
