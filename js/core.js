@@ -76,6 +76,131 @@
     return buf;
   };
 
+  /* Shared fire ambience (client 24 Oct): the Ancient Lore fire, used on both fire pages, kept quiet in the background.
+     A low simmer, soft pops and small crackles. Returns a cleanup fn. */
+  GAM.fireAmbience = function (ac, out, level) {
+    const timers = [];
+    let stopped = false;
+    const bus = ac.createGain(); bus.gain.value = level == null ? 0.55 : level; bus.connect(out);
+    const rum = ac.createBufferSource(); rum.buffer = GAM.noiseBuffer(ac, 'brown', 6); rum.loop = true;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260;
+    const rg = ac.createGain(); rg.gain.value = 0.09;
+    rum.connect(lp).connect(rg).connect(bus); rum.start();
+    const pop = () => {
+      if (stopped) return;
+      const t = ac.currentTime + 0.01;
+      const o = ac.createOscillator(); o.type = 'sine';
+      const f0 = 180 + Math.random() * 220;
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.6 + Math.random() * 0.8), t + 0.07);
+      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.04, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      o.connect(f).connect(g).connect(bus); o.start(t); o.stop(t + 0.15);
+      timers.push(setTimeout(pop, 120 + Math.random() * (Math.random() < 0.2 ? 900 : 380)));
+    };
+    const crackle = () => {
+      if (stopped) return;
+      const t = ac.currentTime + 0.01;
+      const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'white', 2);
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800 + Math.random() * 2000;
+      const g = ac.createGain(); const d = 0.01 + Math.random() * 0.025;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03 + Math.random() * 0.04, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      s.connect(hp).connect(g).connect(bus); s.start(t, Math.random()); s.stop(t + d + 0.02);
+      timers.push(setTimeout(crackle, 180 + Math.random() * 1100));
+    };
+    pop(); crackle();
+    return () => {
+      stopped = true; timers.forEach(clearTimeout);
+      try { rum.stop(); } catch (e) {}
+      try { bus.disconnect(); } catch (e) {}
+    };
+  };
+
+  /* Light birdsong for the garden (client 24 Oct): a few birds singing softly at different distances. */
+  GAM.birdsong = function (ac, out, level) {
+    const timers = [];
+    let stopped = false;
+    const bus = ac.createGain(); bus.gain.value = level == null ? 0.5 : level; bus.connect(out);
+    // a little open-air space: soft, short echo off the garden walls
+    const dl = ac.createDelay(1); dl.delayTime.value = 0.13;
+    const fb = ac.createGain(); fb.gain.value = 0.22;
+    const dlp = ac.createBiquadFilter(); dlp.type = 'lowpass'; dlp.frequency.value = 3800;
+    const wet = ac.createGain(); wet.gain.value = 0.2;
+    dl.connect(dlp).connect(fb).connect(dl); dlp.connect(wet).connect(bus);
+    const R = (a, b) => a + Math.random() * (b - a);
+    const later = (fn, ms) => timers.push(setTimeout(() => { if (!stopped) fn(); }, ms));
+    function voice(pan, gain, tone) {
+      let dest = bus;
+      try { const p = ac.createStereoPanner(); p.pan.value = pan; p.connect(bus); dest = p; } catch (e) {}
+      const g = ac.createGain(); g.gain.value = gain; g.connect(dest);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tone; lp.connect(g);
+      lp.connect(dl);
+      return lp;
+    }
+    // one note: a sine glide with a soft attack and a quiet second harmonic
+    function note(dest, t, dur, f0, f1, amp) {
+      const o = ac.createOscillator(); o.type = 'sine';
+      const o2 = ac.createOscillator(); o2.type = 'sine';
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      o2.frequency.setValueAtTime(f0 * 2, t); o2.frequency.exponentialRampToValueAtTime(f1 * 2, t + dur);
+      const g = ac.createGain(); const g2 = ac.createGain(); g2.gain.value = 0.07;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(amp, t + Math.min(0.012, dur * 0.3));
+      g.gain.setValueAtTime(amp, t + dur * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); o2.connect(g2).connect(g); g.connect(dest);
+      o.start(t); o2.start(t); o.stop(t + dur + 0.02); o2.stop(t + dur + 0.02);
+    }
+    // warbler nearby: a varied run of short sweeping notes
+    const vA = voice(-0.25, 0.9, 7000);
+    function warble() {
+      let t = ac.currentTime + 0.05;
+      const n = 4 + ((Math.random() * 6) | 0);
+      let base = R(2400, 3400);
+      for (let i = 0; i < n; i++) {
+        const d = R(0.05, 0.14);
+        const up = Math.random() < 0.5;
+        const f0 = base * R(0.9, 1.15), f1 = f0 * (up ? R(1.15, 1.5) : R(0.65, 0.88));
+        note(vA, t, d, f0, f1, R(0.05, 0.09));
+        t += d + R(0.03, 0.09);
+        base *= R(0.94, 1.06);
+      }
+      later(warble, R(4500, 9500));
+    }
+    // a whistled two-note call further away
+    const vB = voice(0.55, 0.55, 5500);
+    function whistle() {
+      const t = ac.currentTime + 0.05;
+      const f = R(3300, 4000);
+      note(vB, t, R(0.28, 0.38), f, f * 0.97, 0.06);
+      note(vB, t + R(0.42, 0.5), R(0.3, 0.4), f * R(0.8, 0.86), f * R(0.78, 0.84), 0.055);
+      later(whistle, R(7000, 14000));
+    }
+    // a small trill in the far trees
+    const vC = voice(-0.65, 0.4, 6500);
+    function trill() {
+      let t = ac.currentTime + 0.05;
+      const n = 10 + ((Math.random() * 14) | 0);
+      let f = R(4300, 5200);
+      for (let i = 0; i < n; i++) { note(vC, t, 0.03, f, f * 0.78, 0.04); t += R(0.045, 0.06); f *= 0.995; }
+      later(trill, R(9000, 17000));
+    }
+    // occasional single chirps from anywhere
+    const vD = voice(0.2, 0.35, 8000);
+    function chirp() {
+      const t = ac.currentTime + 0.03;
+      const f = R(4800, 6500);
+      note(vD, t, R(0.04, 0.07), f, f * R(0.7, 0.85), 0.05);
+      if (Math.random() < 0.4) note(vD, t + R(0.1, 0.16), R(0.04, 0.07), f * 1.05, f * 0.8, 0.04);
+      later(chirp, R(1500, 4500));
+    }
+    later(warble, 300); later(whistle, 2600); later(trill, 5200); later(chirp, 1200);
+    return () => {
+      stopped = true; timers.forEach(clearTimeout);
+      try { bus.disconnect(); } catch (e) {}
+      try { dl.disconnect(); } catch (e) {}
+    };
+  };
+
   /* ---------- Scene context ---------- */
   GAM.makeContext = function (stage) {
     const cleanups = [];

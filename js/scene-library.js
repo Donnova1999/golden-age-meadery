@@ -621,68 +621,12 @@ void main(){
           turnStart = tNow + 10 + Math.random() * 4;
           turnSounded = false;
         }
-        if (freeze == null && !turnSounded && tNow >= turnStart && turnStart >= 0) {
-          turnSounded = true;
-          ctx.sfx(pageSound);
-        }
         render(tNow);
         drawSmoke(tNow, dt);
       }
 
-      /* ---- sound ---- */
-      function pageSound(ac, out) {
-        const t = ac.currentTime + 0.02;
-        const nb = GAM.noiseBuffer(ac, 'white', 2);
-        const src = ac.createBufferSource(); src.buffer = nb;
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
-        bp.frequency.setValueAtTime(900, t); bp.frequency.exponentialRampToValueAtTime(3200, t + 0.6); bp.frequency.exponentialRampToValueAtTime(1400, t + 1.3);
-        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.16, t + 0.18); g.gain.setValueAtTime(0.16, t + 0.5);
-        g.gain.exponentialRampToValueAtTime(0.05, t + 1.0); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
-        // flutter: amplitude-modulated crinkle near the end of the swing
-        const am = ac.createGain(); am.gain.value = 0.6;
-        const lfo = ac.createOscillator(); lfo.frequency.value = 23; const lfoG = ac.createGain(); lfoG.gain.value = 0.4;
-        lfo.connect(lfoG).connect(am.gain);
-        src.connect(bp).connect(am).connect(g).connect(out);
-        src.start(t, Math.random()); src.stop(t + 1.6); lfo.start(t); lfo.stop(t + 1.6);
-        // soft landing tap
-        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(140, t + 1.75); o.frequency.exponentialRampToValueAtTime(70, t + 1.95);
-        const og = ac.createGain(); og.gain.setValueAtTime(0.0001, t + 1.74); og.gain.exponentialRampToValueAtTime(0.06, t + 1.77); og.gain.exponentialRampToValueAtTime(0.0001, t + 2.0);
-        o.connect(og).connect(out); o.start(t + 1.74); o.stop(t + 2.05);
-      }
-      ctx.onSound((ac, out) => {
-        const nodes = [];
-        let stopped = false;
-        // low simmer
-        const rum = ac.createBufferSource(); rum.buffer = GAM.noiseBuffer(ac, 'brown', 6); rum.loop = true;
-        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260;
-        const rg = ac.createGain(); rg.gain.value = 0.09;
-        rum.connect(lp).connect(rg).connect(out); rum.start();
-        nodes.push(rum);
-        const bubble = () => {
-          if (stopped) return;
-          const t = ac.currentTime + 0.01;
-          const o = ac.createOscillator(); o.type = 'sine';
-          const f0 = 180 + Math.random() * 220;
-          o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.6 + Math.random() * 0.8), t + 0.07);
-          const bp = ac.createBiquadFilter(); bp.type = 'lowpass'; bp.frequency.value = 900;
-          const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.04, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-          o.connect(bp).connect(g).connect(out); o.start(t); o.stop(t + 0.15);
-          timers.push(setTimeout(bubble, 120 + Math.random() * (Math.random() < 0.2 ? 900 : 380)));
-        };
-        const crackle = () => {
-          if (stopped) return;
-          const t = ac.currentTime + 0.01;
-          const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'white', 2);
-          const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800 + Math.random() * 2000;
-          const g = ac.createGain(); const d = 0.01 + Math.random() * 0.025;
-          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03 + Math.random() * 0.04, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-          s.connect(hp).connect(g).connect(out); s.start(t, Math.random()); s.stop(t + d + 0.02);
-          timers.push(setTimeout(crackle, 180 + Math.random() * 1100));
-        };
-        bubble(); crackle();
-        return () => { stopped = true; nodes.forEach((n) => { try { n.stop(); } catch (e) {} }); };
-      });
+      // sound (client 24 Oct): just the fire, quietly in the background (no page-turn sound)
+      ctx.onSound((ac, out) => GAM.fireAmbience(ac, out));
 
       document.addEventListener('visibilitychange', syncVid);
       /* ---- start ---- */

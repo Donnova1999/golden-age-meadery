@@ -24,9 +24,10 @@
     mob: {
       w: 945, h: 1304, real: true,
       bg: 'scene/hf-real-m.webp', mask: 'scene/hf-real-firemask-m.png', video: 'hf-loop.webm',
-      vid: { x: 149.5, y: 381, w: 960 * 1.15, h: 540 * 1.15 }, vidBlend: 'screen', vidFilter: 'brightness(.95) contrast(1.6)',
-      candles: [{ x: 61, y: 505, wick: 524, r: 6 }],
-      fire: { x: 690, y: 560, rx: 230, ry: 220 }, spark: null,
+      vid: { x: 174.9, y: 302.3, w: 960 * 1.3455, h: 540 * 1.3455 }, vidBlend: 'screen', vidFilter: 'brightness(.95) contrast(1.6)',
+      // fireplace moved right (client 24 Oct) so the flames clear the big bottle
+      candles: [{ x: 71.4, y: 447.3, wick: 469.6, r: 7 }],
+      fire: { x: 807, y: 512, rx: 270, ry: 257 }, spark: null,
     },
   };
 
@@ -82,7 +83,8 @@
         if (set.vidBlend) fire.style.mixBlendMode = set.vidBlend;
         if (!reduced) {
           video = el('video', `position:absolute;left:${pct(set.vid.x, set.w)};top:${pct(set.vid.y, set.h)};` +
-            `width:${pct(set.vid.w, set.w)};height:${pct(set.vid.h, set.h)};object-fit:fill;filter:${set.vidFilter || 'brightness(.93) saturate(1.04)'}`, fire);
+            `width:${pct(set.vid.w, set.w)};height:${pct(set.vid.h, set.h)};object-fit:fill;filter:${set.vidFilter || 'brightness(.93) saturate(1.04)'}` +
+            (set.real ? ';max-width:none;max-height:none' : ''), fire); // phone: the page CSS caps videos at 100% width, which squashed the fire
           video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
           video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true');
           video.src = ctx.media(set.video);
@@ -331,46 +333,8 @@
       const onVis = () => { syncVideo(); if (!document.hidden) start(); };
       document.addEventListener('visibilitychange', onVis);
 
-      /* ---------- sound: crackling fire only (client, 21 Oct) — no roar, no hiss ---------- */
-      ctx.onSound((ac, out) => {
-        const white = GAM.noiseBuffer(ac, 'white', 2);
-        const bus = ac.createGain(); bus.gain.value = 0.9; bus.connect(out);
-        // one crackle: a very short burst of filtered noise with a fast decay (resin popping in a log)
-        function crack(vol, len, freq, q) {
-          const t0 = ac.currentTime + 0.005;
-          const s = ac.createBufferSource(); s.buffer = white;
-          const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
-          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q || 0.8;
-          const g = ac.createGain();
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(vol, t0 + 0.0015);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
-          s.connect(hp).connect(bp).connect(g).connect(bus);
-          s.start(t0, Math.random() * 1.8, len + 0.03);
-        }
-        // a cluster of tiny clicks, sometimes with a deeper "snap" in front
-        function burst(big) {
-          const n = big ? 3 + Math.floor(Math.random() * 5) : 1 + Math.floor(Math.random() * (Math.random() < 0.35 ? 5 : 2));
-          if (big || Math.random() < 0.12) crack(0.22 + Math.random() * 0.18, 0.05 + Math.random() * 0.04, 700 + Math.random() * 700, 0.6);
-          let t = 0;
-          for (let i = 0; i < n; i++) {
-            t += 8 + Math.random() * (big ? 45 : 70);
-            setTimeout(() => !dead && crack(0.06 + Math.random() * 0.2, 0.008 + Math.random() * 0.03, 1800 + Math.random() * 4200, 0.7 + Math.random()), t);
-          }
-        }
-        let timer = 0, dead = false;
-        (function tick() {
-          if (dead) return;
-          if (!paused && visible) burst(false);
-          // irregular rhythm: quick runs of crackles with short quiet gaps
-          timer = setTimeout(tick, Math.random() < 0.7 ? 70 + Math.random() * 260 : 350 + Math.random() * 700);
-        })();
-        soundPop = () => burst(true);
-        return () => {
-          dead = true; clearTimeout(timer); soundPop = null;
-          try { bus.disconnect(); } catch (e) {}
-        };
-      });
+      /* ---------- sound (client 24 Oct): the same quiet fire as the Ancient Lore page ---------- */
+      ctx.onSound((ac, out) => GAM.fireAmbience(ac, out));
 
       return {
         setPaused(p) {

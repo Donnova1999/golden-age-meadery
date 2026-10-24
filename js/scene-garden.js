@@ -17,19 +17,23 @@
   const COMP = {
     d: { base: 'scene/md-base.webp', mask: 'scene/md-mask.png', la: 'scene/md-leaf-a.png', lb: 'scene/md-leaf-b.png', w: 1376, h: 768, sway: 1.5, leaf: 3.1 },
     // tall (phone, and desktop beside the story): Miki's realistic garden picture with the real bottles (client 23 Oct)
-    m: { base: 'scene/md-real-m.webp', mask: 'scene/md-real-mask-m.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4 },
+    m: { base: 'scene/md-real-m.webp', mask: 'scene/md-real-mask-m.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4,
+         water: 1, dry: 'scene/md-real-dry-m.webp', dryBox: [830, 248, 232, 374] },
   };
   // content rects of each petal in md-petals.webp (x, y, w, h)
   const PETALS = [[18, 4, 283, 192], [346, 4, 267, 192], [661, 4, 278, 192], [978, 4, 283, 192], [1301, 4, 278, 192]];
+  // phone (client 24 Oct): the real rose petals lying on the table in Miki's picture, cut out (x, y, w, h in md-real-petals.webp)
+  const PETALS_M = [[6, 6, 112, 57], [130, 6, 108, 64], [250, 6, 146, 80]];
 
   const VS = 'attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
   const FS = [
     'precision highp float;',
     'varying vec2 v;',
-    'uniform sampler2D uImg,uMask,uLeafA,uLeafB;',
+    'uniform sampler2D uImg,uMask,uLeafA,uLeafB,uDry;',
+    'uniform vec4 uDryR;',
     'uniform vec2 uSize;',       // image size in px
     'uniform vec4 uCrop;',       // uv offset.xy, uv scale.zw (cover crop)
-    'uniform float uT,uGust,uSway,uLeaf;',
+    'uniform float uT,uGust,uSway,uLeaf,uWM;',
     'uniform vec3 uW;',          // the three flutter frequencies (rad/s)
     'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
@@ -62,7 +66,20 @@
     // leaves catch the light differently as they turn
     ' c*=1.+.07*fx*m.r*(.5+uGust);',
     // fountain streams: two-phase flow along +y (content moves down), with a glint that rides the water
-    ' if(m.g>.004){',
+    // phone picture (client 24 Oct): the water itself (B = its opacity) is lifted off the photo and falls; the stone stays still
+    ' if(uWM>.5&&m.g>.004){',
+    '  vec3 Wc=vec3(.925,.937,.925);',
+    '  float a0=texture2D(uMask,q).b;',
+    '  vec3 dry=texture2D(uDry,clamp((q-uDryR.xy)/uDryR.zw,0.,1.)).rgb;',
+    '  float r=t*2.3; float f1=fract(r), f2=fract(r+.5); float L=40.*px.y;',
+    '  vec3 s1=texture2D(uMask,q-vec2(0.,f1*L)).gbr, s2=texture2D(uMask,q-vec2(0.,f2*L)).gbr;',
+    '  float b1=s1.x>.02?s1.y:a0, b2=s2.x>.02?s2.y:a0;',
+    '  float aw=mix(b1,b2,abs(2.*f1-1.));',
+    '  float gl2=n(vec2(q.x*uSize.x*.5,q.y*uSize.y*.06-t*14.));',
+    '  aw=clamp(aw*1.22*(1.+.35*smoothstep(.6,.95,gl2)),0.,.85);',
+    '  c=mix(c,dry*(1.-aw)+Wc*aw,clamp(m.g,0.,1.));',
+    ' }',
+    ' if(uWM<.5&&m.g>.004){',
     '  float r=t*2.6; float f1=fract(r), f2=fract(r+.5); float L=26.*px.y;',
     '  vec3 a1=texture2D(uImg,q-vec2(0.,f1*L)).rgb, a2=texture2D(uImg,q-vec2(0.,f2*L)).rgb;',
     '  vec3 fl=mix(a1,a2,abs(2.*f1-1.));',
@@ -71,7 +88,7 @@
     '  c=mix(c,fl,clamp(m.g*1.05,0.,1.));',
     ' }',
     // basin surface: small travelling ripples and shimmer
-    ' if(m.b>.004){',
+    ' if(uWM<.5&&m.b>.004){',
     '  float w2=sin(q.y*uSize.y*.85-t*2.7+q.x*uSize.x*.045)*.6+sin(q.x*uSize.x*.11+t*1.9)*.4;',
     '  vec3 rc=texture2D(uImg,q+vec2(w2*1.4,w2*.5)*px).rgb;',
     '  rc*=1.+.07*w2;',
@@ -140,11 +157,12 @@
           const loc = gl.getAttribLocation(prog, 'p');
           gl.enableVertexAttribArray(loc);
           gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-          ['uImg', 'uMask', 'uLeafA', 'uLeafB', 'uSize', 'uCrop', 'uT', 'uGust', 'uSway', 'uLeaf', 'uW'].forEach((k) => (U[k] = gl.getUniformLocation(prog, k)));
+          ['uImg', 'uMask', 'uLeafA', 'uLeafB', 'uSize', 'uCrop', 'uT', 'uGust', 'uSway', 'uLeaf', 'uW', 'uWM', 'uDry', 'uDryR'].forEach((k) => (U[k] = gl.getUniformLocation(prog, k)));
           gl.uniform1i(U.uImg, 0);
           gl.uniform1i(U.uMask, 1);
           gl.uniform1i(U.uLeafA, 2);
           gl.uniform1i(U.uLeafB, 3);
+          gl.uniform1i(U.uDry, 4);
           gl.uniform3f(U.uW, 2.1, 3.4, 5.3);
         } catch (e) {
           console.warn('garden scene: WebGL unavailable', e);
@@ -171,7 +189,8 @@
         const c = (cache[key] = {});
         const C = COMP[key];
         const opt = (src) => (gl ? loadImg(ctx.img(src)) : Promise.resolve(null));
-        c.ready = Promise.all([loadImg(ctx.img(C.base)), opt(C.mask), opt(C.la), opt(C.lb)]).then(([b, m, la, lb]) => {
+        const optDry = C.dry ? opt(C.dry) : Promise.resolve(null);
+        c.ready = Promise.all([loadImg(ctx.img(C.base)), opt(C.mask), opt(C.la), opt(C.lb), optDry]).then(([b, m, la, lb, dry]) => {
           if (!alive) return c;
           c.base = b;
           c.mask = m;
@@ -180,6 +199,7 @@
             c.texMask = tex(m);
             c.texLA = tex(la, true);
             c.texLB = tex(lb, true);
+            if (dry) c.texDry = tex(dry);
           }
           return c;
         });
@@ -197,13 +217,16 @@
 
       /* ---------- petals ---------- */
       const pctx = pc.getContext('2d');
-      let sheet = null;
+      let sheet = null, sheetM = null;
       const petals = [];
       loadImg(ctx.img('scene/md-petals.webp')).then((i) => { sheet = i; }).catch(() => {});
+      loadImg(ctx.img('scene/md-real-petals.webp')).then((i) => { sheetM = i; }).catch(() => {});
       function spawn(p, initial) {
         const mob = comp === 'm';
         p.near = Math.random() < 0.18;
-        p.size = (mob ? W * rnd(0.075, 0.1) : W * rnd(0.04, 0.056)) * (p.near ? 1.35 : 1);
+        p.size = (mob ? W * rnd(0.065, 0.09) : W * rnd(0.04, 0.056)) * (p.near ? (mob ? 1.2 : 1.35) : 1);
+        // phone: a pause before each petal drifts in again, so only a few fall at a time
+        p.wait = mob && !initial ? rnd(1.5, 5.5) : 0;
         p.x0 = rnd(-0.05, 0.95) * W;
         p.y = initial ? rnd(-0.3, 0.9) * H : -p.size * rnd(1.0, 2.6);
         p.vy = (H / rnd(10, 14)) * (p.near ? 1.2 : 1); // px per second
@@ -217,21 +240,24 @@
         p.tiltW = rnd(1.3, 2.2);
         p.tph = rnd(0, 6.28);
         p.age = 0;
-        p.spr = (Math.random() * PETALS.length) | 0;
+        p.spr = (Math.random() * (mob ? PETALS_M.length : PETALS.length)) | 0;
       }
       function initPetals() {
         petals.length = 0;
         if (reduced) return;
-        const n = comp === 'm' ? 5 : 6;
+        const n = comp === 'm' ? 3 : 6;
         for (let i = 0; i < n; i++) { const p = {}; spawn(p, true); petals.push(p); }
       }
       function drawPetals(dt) {
         const dpr = pc.width / W;
         pctx.setTransform(1, 0, 0, 1, 0, 0);
         pctx.clearRect(0, 0, pc.width, pc.height);
-        if (!sheet) return;
+        const mob = comp === 'm';
+        const sh = mob ? sheetM : sheet, rects = mob ? PETALS_M : PETALS;
+        if (!sh) return;
         const wind = 0.6 + gust * 1.4;
         for (const p of petals) {
+          if (p.wait > 0) { p.wait -= dt; continue; }
           p.age += dt;
           const sw = p.swayW * p.age + p.ph;
           // falls a touch slower at the ends of each swing, never stops
@@ -242,13 +268,13 @@
           const rot = p.rot0 + p.spin * p.age + 0.32 * Math.cos(sw); // tilts into the direction of the swing
           const sx = Math.cos(p.tiltA * Math.sin(p.tiltW * p.age + p.tph));
           const sy = 0.9 + 0.1 * Math.cos(p.tiltW * 0.63 * p.age + p.tph);
-          const r = PETALS[p.spr];
+          const r = rects[p.spr % rects.length];
           const w = p.size, h = (p.size * r[3]) / r[2];
           pctx.setTransform(dpr, 0, 0, dpr, x * dpr, p.y * dpr);
           pctx.rotate(rot);
           pctx.scale(sx, sy);
           pctx.globalAlpha = 0.97;
-          pctx.drawImage(sheet, r[0], r[1], r[2], r[3], -w / 2, -h / 2, w, h);
+          pctx.drawImage(sh, r[0], r[1], r[2], r[3], -w / 2, -h / 2, w, h);
         }
         pctx.globalAlpha = 1;
       }
@@ -284,6 +310,14 @@
               gl.uniform2f(U.uSize, COMP[key].w, COMP[key].h);
               gl.uniform1f(U.uSway, COMP[key].sway);
               gl.uniform1f(U.uLeaf, COMP[key].leaf);
+              const C2 = COMP[key];
+              gl.uniform1f(U.uWM, C2.water && c.texDry ? 1 : 0);
+              if (c.texDry) {
+                gl.activeTexture(gl.TEXTURE4);
+                gl.bindTexture(gl.TEXTURE_2D, c.texDry);
+                const b = C2.dryBox;
+                gl.uniform4f(U.uDryR, b[0] / C2.w, b[1] / C2.h, b[2] / C2.w, b[3] / C2.h);
+              }
               draw(simT);
               glc.style.opacity = '1';
             }
@@ -326,43 +360,9 @@
         gust = breathe + e * gustPeak * 0.85;
       }
 
-      /* ---------- sound: fountain trickle + breeze ---------- */
+      /* ---------- sound (client 24 Oct): birds singing lightly in the background ---------- */
       let breezeGain = null;
-      ctx.onSound((ac, out) => {
-        const nodes = [];
-        const pink = GAM.noiseBuffer(ac, 'pink', 6);
-        const brown = GAM.noiseBuffer(ac, 'brown', 6);
-        // water falling into the basin: bright band of noise with a bubbling tremolo
-        const s1 = ac.createBufferSource(); s1.buffer = pink; s1.loop = true;
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 0.55;
-        const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
-        const g1 = ac.createGain(); g1.gain.value = 0.17;
-        const trem = ac.createGain(); trem.gain.value = 0.75;
-        const lfo = ac.createOscillator(); lfo.frequency.value = 6.3;
-        const lfoG = ac.createGain(); lfoG.gain.value = 0.22;
-        lfo.connect(lfoG); lfoG.connect(trem.gain);
-        const lfo2 = ac.createOscillator(); lfo2.frequency.value = 0.83;
-        const lfo2G = ac.createGain(); lfo2G.gain.value = 0.12;
-        lfo2.connect(lfo2G); lfo2G.connect(trem.gain);
-        s1.connect(bp); bp.connect(hp); hp.connect(trem); trem.connect(g1); g1.connect(out);
-        // soft splash body
-        const s2 = ac.createBufferSource(); s2.buffer = pink; s2.loop = true; s2.playbackRate.value = 0.83;
-        const lp2 = ac.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 900;
-        const g2 = ac.createGain(); g2.gain.value = 0.07;
-        s2.connect(lp2); lp2.connect(g2); g2.connect(out);
-        // breeze: brown noise through a lowpass that opens with the gusts
-        const s3 = ac.createBufferSource(); s3.buffer = brown; s3.loop = true;
-        const lp3 = ac.createBiquadFilter(); lp3.type = 'lowpass'; lp3.frequency.value = 520; lp3.Q.value = 0.4;
-        const g3 = ac.createGain(); g3.gain.value = 0.05;
-        s3.connect(lp3); lp3.connect(g3); g3.connect(out);
-        breezeGain = { g: g3, f: lp3, ac };
-        [s1, s2, s3, lfo, lfo2].forEach((n) => n.start());
-        nodes.push(s1, s2, s3, lfo, lfo2, bp, hp, g1, trem, lfoG, lfo2G, lp2, g2, lp3, g3);
-        return () => {
-          breezeGain = null;
-          nodes.forEach((n) => { try { n.stop && n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} });
-        };
-      });
+      ctx.onSound((ac, out) => GAM.birdsong(ac, out, 1.0));
       let lastSound = 0;
       function soundTick(t) {
         if (!breezeGain || t - lastSound < 0.25) return;
@@ -404,11 +404,11 @@
           ro.disconnect();
           document.removeEventListener('visibilitychange', onVis);
           if (gl) {
-            Object.values(cache).forEach((c) => { try { ['texBase', 'texMask', 'texLA', 'texLB'].forEach((k) => c[k] && gl.deleteTexture(c[k])); } catch (e) {} });
+            Object.values(cache).forEach((c) => { try { ['texBase', 'texMask', 'texLA', 'texLB', 'texDry'].forEach((k) => c[k] && gl.deleteTexture(c[k])); } catch (e) {} });
             GAM.loseGL(gl);
           }
           gl = null;
-          sheet = null;
+          sheet = null; sheetM = null;
           petals.length = 0;
           still.removeAttribute('src');
           frame.style.background = '';
