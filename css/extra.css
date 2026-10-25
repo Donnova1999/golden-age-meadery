@@ -75,7 +75,7 @@ html, body { background: #161513; }
 
 /* ---------- page photographs (client, 21 Oct) ---------- */
 /* Home: the farm in autumn behind the hero */
-.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610240715) 50% 58%/cover no-repeat}
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-home.webp?v=202610250600) 50% 58%/cover no-repeat}
 .mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
 .mead-home[data-route=home] .mead-hero-shade{background:
   linear-gradient(90deg,rgba(10,8,6,.86) 0%,rgba(10,8,6,.72) 28%,rgba(10,8,6,.30) 52%,rgba(10,8,6,0) 70%),
@@ -91,11 +91,11 @@ html, body { background: #161513; }
 .mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
 .mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
 .mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
-.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610240715);background-position:60% 42%}
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store.webp?v=202610250600);background-position:60% 42%}
 .mead-home[data-route=store]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
-.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610240715);background-position:50% 40%}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202610250600);background-position:50% 40%}
 .mead-home[data-route=contact]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
@@ -120,7 +120,7 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
 .gam-age { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 16px; background: #0e0c0a; overflow: auto;
   transition: opacity .45s ease, visibility .45s; }
 .gam-age.out { opacity: 0; visibility: hidden; }
-.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-home.webp?v=202610240715) 50% 55% / cover no-repeat;
+.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-home.webp?v=202610250600) 50% 55% / cover no-repeat;
   filter: blur(14px) brightness(.5) saturate(1.1); transform: scale(1.04); }
 .gam-age::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
 .gam-age-card { position: relative; z-index: 1; width: min(460px, 100%); text-align: center; padding: 40px 34px 28px; color: #f3ead6;
