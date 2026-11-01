@@ -306,6 +306,48 @@
     sec.addEventListener('click', (e) => { const b = e.target.closest('[data-shot]'); if (b) lbOpen(all, +b.dataset.shot); });
   }
 
+  // Life on Salt Spring (client photos, 1 Nov): four groups, justified rows at each photo's own shape, same viewer as the farm page
+  const LIFE = [
+    { n: '01', k: 'From the top of the farm', t: 'The view', s: [
+      ['life-01', 1.3333, 'A clear spring day over the water.'],
+      ['life-02', 1.3333, 'Late sun breaking through the storm clouds.'],
+      ['life-03', 1.3333, 'A rainbow over the bay after a passing shower.'],
+      ['life-04', 1.3333, 'Evening light on the hill across the water.'],
+      ['life-05', 1.3333, 'Early morning sun over the meadow.'],
+      ['life-06', 1.3333, 'A snowy winter sunset over the farm.'],
+      ['life-07', 1.3333, 'Sunset on the water between the islands.'],
+      ['life-08', 1.3333, 'Looking out over the valley to the Gulf Islands.']] },
+    { n: '02', k: 'Terraces and stone walls', t: 'The vineyard', s: [
+      ['life-09', 1.3333, 'The vines in full leaf on a summer evening.', 'w'],
+      ['life-10', 1.3333, 'Spring in the rows, before the vines leaf out.'],
+      ['life-11', 1.3333, 'Evening work in the rows, with the dogs looking on.']] },
+    { n: '03', k: 'Currants, raspberries and more', t: 'The berries', s: [
+      ['life-12', 0.75, 'Red currants ripening on the bush.'],
+      ['life-13', 0.75, 'Picking red currants straight into the bucket.'],
+      ['life-14', 0.75, 'Red currants catching the evening sun.'],
+      ['life-15', 0.75, 'Red currant bushes under the bird netting.'],
+      ['life-16', 0.75, 'Black currants ready for picking.'],
+      ['life-17', 0.75, 'Dark berries ripening behind the netting.'],
+      ['life-18', 0.75, 'Raspberries among the daisies.']] },
+    { n: '04', k: 'Our two companions', t: 'The dogs', s: [
+      ['life-19', 1.3333, 'Resting on the porch.'],
+      ['life-20', 0.75, 'Two dogs, one bed.']] },
+  ];
+  function initLife() {
+    const hero = $('.mead-page-hero', root);
+    const all = [];
+    const html = LIFE.map((g) => {
+      const shots = g.s.map((s) => { const i = all.push([s[0], '', s[2]]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${s[3] ? ' ' + s[3] : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(s[2])}"><img src="img/${s[0]}-t.webp" alt="${esc(s[2])}" loading="lazy" decoding="async"></button><figcaption>${esc(s[2])}</figcaption></figure>`; }).join('');
+      return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${g.n}</b><span>${g.k}</span><em>${g.t}</em></div><div class="gam-life-shots">${shots}</div></div>`;
+    }).join('');
+    const sec = document.createElement('section');
+    sec.className = 'gam-farm gam-life';
+    sec.setAttribute('aria-label', 'Life on Salt Spring, photographs');
+    sec.innerHTML = html;
+    hero.after(sec);
+    sec.addEventListener('click', (e) => { const b = e.target.closest('[data-shot]'); if (b) lbOpen(all, +b.dataset.shot); });
+  }
+
   function initWhereToBuy() {
     const input = $('.mead-search input', root);
     if (!input) return;
@@ -429,6 +471,7 @@
     if (route === 'store') initStore();
     if (KIND[route]) initMead(route, cleanups);
     if (route === 'building-the-farm') initFarm();
+    if (route === 'life-on-salt-spring') initLife();
     if (route === 'where-to-buy') initWhereToBuy();
     if (route === 'contact') initContact();
     if (route === 'cart') renderCart();
