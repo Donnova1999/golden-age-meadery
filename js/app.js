@@ -31,8 +31,8 @@
   const skuOf = (key) => { const [slug, size] = String(key).split('|'); return PRODUCTS[slug] && SIZES[size] ? { slug, size, p: PRODUCTS[slug], s: SIZES[size] } : null; };
   const KIND = { 'hearth-and-fire': 'fire', 'midnight-dream': 'garden', 'ancient-lore': 'library' };
   const SCENE_FILES = { fire: 'js/scene-fire.js', garden: 'js/scene-garden.js', library: 'js/scene-library.js' };
-  const ROUTES = ['home', 'store', 'hearth-and-fire', 'midnight-dream', 'ancient-lore', 'building-the-farm', 'life-on-salt-spring', 'the-dogs', 'our-story', 'where-to-buy', 'contact', 'cart'];
-  const NAV_OF = { 'hearth-and-fire': 'Meads', 'midnight-dream': 'Meads', 'ancient-lore': 'Meads', 'building-the-farm': 'About Us', 'life-on-salt-spring': 'About Us', 'the-dogs': 'About Us', 'our-story': 'About Us', home: 'Home', store: 'Store', contact: 'Contact', 'where-to-buy': 'Store', cart: 'Store' };
+  const ROUTES = ['home', 'store', 'hearth-and-fire', 'midnight-dream', 'ancient-lore', 'building-the-farm', 'life-on-salt-spring', 'the-dogs', 'bella', 'boss', 'our-story', 'where-to-buy', 'contact', 'cart'];
+  const NAV_OF = { 'hearth-and-fire': 'Meads', 'midnight-dream': 'Meads', 'ancient-lore': 'Meads', 'building-the-farm': 'About Us', 'life-on-salt-spring': 'About Us', 'the-dogs': 'About Us', 'bella': 'About Us', 'boss': 'About Us', 'our-story': 'About Us', home: 'Home', store: 'Store', contact: 'Contact', 'where-to-buy': 'Store', cart: 'Store' };
 
   const FARM = [
     { d: '25', m: 'March 2017', t: 'The field before', s: [['farm-01', 'w', 'The field as we found it, looking across to the water.'], ['farm-02', '', 'Clearing the brush piles with a mini excavator.'], ['farm-03', '', 'The upper field, still bare and stony.']] },
@@ -333,39 +333,57 @@
       ['life-17', 0.75, 'Jostaberries ripening behind the netting.'],
       ['life-18', 0.75, 'Raspberries among the daisies.']] },
   ];
-  // The Dogs page (client, 2 Nov): its own tab under About Us
+  // The Dogs page (client, 2 Nov): the two grown dogs. 'br' ends a row (2 + 2 layout).
   const DOGS = [
-    // client, 2 Nov: 20 more photos, no captions for now (5th item is alt text only).
-    // Order tuned so no photo sits alone on a row at common screen widths.
     { s: [
       ['life-19', 1.3333, 'Nap time.'],
-      ['life-20', 0.75, 'Two dogs, one bed.'],
-      ['dogs-01', 0.75, '', '', 'A puppy sitting in a snowy trail.'],
-      ['dogs-04', 1.3333, '', '', 'A snowy puppy above the bay at sunrise.'],
-      ['dogs-03', 0.75, '', '', 'A puppy resting on the mosaic floor beside a plant.'],
-      ['dogs-02', 0.75, '', '', 'A puppy giving a kiss in the car.'],
-      ['dogs-06', 1.3333, '', '', 'The puppy asleep on the big dog.'],
-      ['dogs-07', 1.3333, '', '', 'The two dogs playing on the bed.'],
-      ['dogs-08', 1.3333, '', '', 'The two dogs asleep together on the bed.'],
-      ['dogs-05', 0.75, '', '', 'A happy puppy riding in the farm cart.'],
-      ['dogs-09', 1.3333, '', '', 'The two dogs asleep on their beds on the porch.'],
-      ['dogs-10', 0.75, '', '', 'The two dogs curled up together on the floor.'],
-      ['dogs-11', 0.75, '', '', 'The two dogs asleep on the floor, seen from above.'],
+      ['life-20', 0.75, 'Two dogs, one bed.', 'br'],
       ['dogs-12', 1.3333, '', '', 'The two dogs rolling in the grass by the vines.'],
-      ['dogs-14', 1.3333, '', '', 'The two dogs resting by the wood stove in the evening.'],
-      ['dogs-13', 0.75, '', '', 'A puppy cuddled at the kitchen table.'],
-      ['dogs-15', 1.3333, '', '', 'A muddy puppy after digging.'],
-      ['dogs-19', 0.75, '', '', 'A puppy looking out over the water from the vineyard.'],
-      ['dogs-17', 1.3333, '', '', 'Carrot time for the two dogs.'],
-      ['dogs-18', 1.3333, '', '', 'The two dogs asleep nose to nose.'],
-      ['dogs-16', 1.3333, '', '', 'The two dogs chewing carrots on their bed.'],
       ['dogs-20', 1.3333, '', '', 'The two dogs resting by the vineyard fence.']] },
+  ];
+  // Bella page (client, 2 Nov): every photo of Bella as a puppy, no captions for now (5th item is alt text only).
+  // Order tuned so no photo sits alone on a row at common screen widths.
+  const BELLA = [
+    { s: [
+      ['dogs-01', 0.75, '', '', 'A puppy sitting in a snowy trail.'],
+      ['dogs-02', 0.75, '', '', 'A puppy giving a kiss in the car.'],
+      ['dogs-04', 1.3333, '', '', 'A snowy puppy above the bay at sunrise.'],
+      ['dogs-07', 1.3333, '', '', 'The two dogs playing on the bed.'],
+      ['dogs-03', 0.75, '', '', 'A puppy resting on the mosaic floor beside a plant.'],
+      ['dogs-06', 1.3333, '', '', 'The puppy asleep on the big dog.'],
+      ['dogs-09', 1.3333, '', '', 'The two dogs asleep on their beds on the porch.'],
+      ['dogs-08', 1.3333, '', '', 'The two dogs asleep together on the bed.'],
+      ['dogs-14', 1.3333, '', '', 'The two dogs resting by the wood stove in the evening.'],
+      ['dogs-05', 0.75, '', '', 'A happy puppy riding in the farm cart.'],
+      ['dogs-11', 0.75, '', '', 'The two dogs asleep on the floor, seen from above.'],
+      ['dogs-13', 0.75, '', '', 'A puppy cuddled at the kitchen table.'],
+      ['dogs-10', 0.75, '', '', 'The two dogs curled up together on the floor.'],
+      ['dogs-15', 1.3333, '', '', 'A muddy puppy after digging.'],
+      ['dogs-16', 1.3333, '', '', 'The two dogs chewing carrots on their bed.'],
+      ['dogs-19', 0.75, '', '', 'A puppy looking out over the water from the vineyard.'],
+      ['dogs-18', 1.3333, '', '', 'The two dogs asleep nose to nose.'],
+      ['dogs-17', 1.3333, '', '', 'Carrot time for the two dogs.']] },
+  ];
+  // Boss page (client, 2 Nov): Boss as a puppy, no captions for now (5th item is alt text only).
+  // Order tuned so no photo sits alone on a row at common screen widths.
+  const BOSS = [
+    { s: [
+      ['boss-01', 0.75, '', '', 'The puppy curled up asleep in the crate.'],
+      ['boss-02', 0.75, '', '', 'The puppy lying in the grass, looking up.'],
+      ['boss-03', 0.75, '', '', 'The puppy in the grass with a pine cone.'],
+      ['boss-04', 0.75, '', '', 'A wet puppy sitting among fallen logs.'],
+      ['boss-10', 1.3333, '', '', 'A muddy puppy sitting in the sun after digging.'],
+      ['boss-06', 1.3333, '', '', 'The puppy digging below the house on the farm.'],
+      ['boss-07', 0.75, '', '', 'The puppy lying under a dining chair.'],
+      ['boss-08', 0.75, '', '', 'The puppy sitting at a foot under the table.'],
+      ['boss-09', 0.75, '', '', 'The puppy lying on the parquet floor.'],
+      ['boss-05', 0.75, '', '', 'A wet puppy licking his nose on the stones.']] },
   ];
   function initLife(groups, label) {
     const hero = $('.mead-page-hero', root);
     const all = [];
     const html = groups.map((g) => {
-      const shots = g.s.map((s) => { const cap = g.nocap ? '' : s[2], alt = s[4] || s[2]; const i = all.push([s[0], '', cap, alt]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${s[3] ? ' ' + s[3] : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}-t.webp" alt="${esc(alt)}" loading="lazy" decoding="async"></button>${cap ? `<figcaption>${esc(cap)}</figcaption>` : ''}</figure>`; }).join('');
+      const shots = g.s.map((s) => { const cap = g.nocap ? '' : s[2], alt = s[4] || s[2]; const cls = (s[3] || '').split(' ').filter((c) => c && c !== 'br'); const br = (s[3] || '').split(' ').includes('br'); const i = all.push([s[0], '', cap, alt]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${cls.length ? ' ' + cls.join(' ') : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}-t.webp" alt="${esc(alt)}" loading="lazy" decoding="async"></button>${cap ? `<figcaption>${esc(cap)}</figcaption>` : ''}</figure>${br ? '<span class="gam-br" aria-hidden="true"></span>' : ''}`; }).join('');
       if (!g.t) return `<div class="gam-farm-day gam-solo"><div class="gam-life-shots">${shots}</div></div>`;
       return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${g.n}</b><span>${g.k}</span><em>${g.t}</em></div><div class="gam-life-shots">${shots}</div></div>`;
     }).join('');
@@ -503,6 +521,8 @@
     if (route === 'building-the-farm') initFarm();
     if (route === 'life-on-salt-spring') initLife(LIFE, 'Life on Salt Spring, photographs');
     if (route === 'the-dogs') initLife(DOGS, 'The dogs, photographs');
+    if (route === 'bella') initLife(BELLA, 'Bella, photographs');
+    if (route === 'boss') initLife(BOSS, 'Boss, photographs');
     if (route === 'where-to-buy') initWhereToBuy();
     if (route === 'contact') initContact();
     if (route === 'cart') renderCart();
