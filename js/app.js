@@ -31,8 +31,8 @@
   const skuOf = (key) => { const [slug, size] = String(key).split('|'); return PRODUCTS[slug] && SIZES[size] ? { slug, size, p: PRODUCTS[slug], s: SIZES[size] } : null; };
   const KIND = { 'hearth-and-fire': 'fire', 'midnight-dream': 'garden', 'ancient-lore': 'library' };
   const SCENE_FILES = { fire: 'js/scene-fire.js', garden: 'js/scene-garden.js', library: 'js/scene-library.js' };
-  const ROUTES = ['home', 'store', 'hearth-and-fire', 'midnight-dream', 'ancient-lore', 'building-the-farm', 'life-on-salt-spring', 'our-story', 'where-to-buy', 'contact', 'cart'];
-  const NAV_OF = { 'hearth-and-fire': 'Meads', 'midnight-dream': 'Meads', 'ancient-lore': 'Meads', 'building-the-farm': 'About Us', 'life-on-salt-spring': 'About Us', 'our-story': 'About Us', home: 'Home', store: 'Store', contact: 'Contact', 'where-to-buy': 'Store', cart: 'Store' };
+  const ROUTES = ['home', 'store', 'hearth-and-fire', 'midnight-dream', 'ancient-lore', 'building-the-farm', 'life-on-salt-spring', 'the-dogs', 'our-story', 'where-to-buy', 'contact', 'cart'];
+  const NAV_OF = { 'hearth-and-fire': 'Meads', 'midnight-dream': 'Meads', 'ancient-lore': 'Meads', 'building-the-farm': 'About Us', 'life-on-salt-spring': 'About Us', 'the-dogs': 'About Us', 'our-story': 'About Us', home: 'Home', store: 'Store', contact: 'Contact', 'where-to-buy': 'Store', cart: 'Store' };
 
   const FARM = [
     { d: '25', m: 'March 2017', t: 'The field before', s: [['farm-01', 'w', 'The field as we found it, looking across to the water.'], ['farm-02', '', 'Clearing the brush piles with a mini excavator.'], ['farm-03', '', 'The upper field, still bare and stony.']] },
@@ -83,7 +83,7 @@
   /* ---------------- lightbox (farm photos) ---------------- */
   const lb = $('#gamLb');
   let lbList = [], lbI = 0;
-  function lbShow(i) { lbI = (i + lbList.length) % lbList.length; const s = lbList[lbI]; $('img', lb).src = `img/${s[0]}.webp`; $('img', lb).alt = s[2]; $('.gam-lb-bar p', lb).textContent = s[2]; }
+  function lbShow(i) { lbI = (i + lbList.length) % lbList.length; const s = lbList[lbI]; $('img', lb).src = `img/${s[0]}.webp`; $('img', lb).alt = s[3] || s[2]; $('.gam-lb-bar p', lb).textContent = s[2]; }
   function lbOpen(list, i) { lbList = list; lbShow(i); lb.classList.add('open'); $('.gam-lb-close', lb).focus(); }
   function lbClose() { lb.classList.remove('open'); }
   $('.gam-lb-close', lb).onclick = lbClose;
@@ -310,18 +310,21 @@
   const LIFE = [
     { n: '01', k: 'From the top of the farm', t: 'The view', s: [
       ['life-01', 1.3333, 'A clear spring day over the water.'],
-      ['life-02', 1.3333, 'Late sun breaking through the storm clouds.'],
       ['life-03', 1.3333, 'A rainbow over the bay after a passing shower.'],
-      ['life-04', 1.3333, 'Evening light on the hill across the water.'],
       ['life-05', 1.3333, 'Early morning sun over the meadow.'],
-      ['life-06', 1.3333, 'A snowy winter sunset over the farm.'],
+      ['life-06', 1.3333, 'A snowy winter sunrise over the farm.'],
       ['life-07', 1.3333, 'Sunset on the water between the islands.'],
       ['life-08', 1.3333, 'The view from the top of Salt Spring.']] },
     { n: '02', k: 'Terraces and stone walls', t: 'The vineyard', s: [
       ['life-09', 1.3333, 'The vines in full leaf on a summer evening.', 'w'],
-      ['life-10', 1.3333, 'Spring in the rows, before the vines leaf out.'],
-      ['life-11', 1.3333, 'Evening work in the rows, with the dogs looking on.']] },
-    { n: '03', k: 'Currants, raspberries and more', t: 'The berries', s: [
+      ['life-10', 1.3333, 'Security on patrol.'],
+      ['life-11', 1.3333, 'Everyone working hard.'],
+      // client, 2 Nov: no captions on these for now (5th item is the alt text only)
+      ['life-21', 1.3333, '', '', 'The family and both dogs in the vineyard above the bay in autumn.'],
+      ['life-22', 1.7766, '', '', 'Clearing broom along the vineyard fence with both dogs.'],
+      ['life-23', 1.3333, '', '', 'The family with the dogs among the autumn vines.'],
+      ['life-24', 1.3333, '', '', 'A family photo in the vineyard above the water.']] },
+    { n: '03', k: 'Currants, raspberries and more', t: 'The berries', nocap: true, s: [
       ['life-12', 0.75, 'Red currants ripening on the bush.'],
       ['life-13', 0.75, 'Picking red currants straight into the bucket.'],
       ['life-14', 0.75, 'Red currants catching the evening sun.'],
@@ -329,20 +332,46 @@
       ['life-16', 0.75, 'Black currants ready for picking.'],
       ['life-17', 0.75, 'Jostaberries ripening behind the netting.'],
       ['life-18', 0.75, 'Raspberries among the daisies.']] },
-    { n: '04', k: 'Our two companions', t: 'The dogs', s: [
-      ['life-19', 1.3333, 'Resting on the porch.'],
-      ['life-20', 0.75, 'Two dogs, one bed.']] },
   ];
-  function initLife() {
+  // The Dogs page (client, 2 Nov): its own tab under About Us
+  const DOGS = [
+    // client, 2 Nov: 20 more photos, no captions for now (5th item is alt text only).
+    // Order tuned so no photo sits alone on a row at common screen widths.
+    { s: [
+      ['life-19', 1.3333, 'Nap time.'],
+      ['life-20', 0.75, 'Two dogs, one bed.'],
+      ['dogs-01', 0.75, '', '', 'A puppy sitting in a snowy trail.'],
+      ['dogs-04', 1.3333, '', '', 'A snowy puppy above the bay at sunrise.'],
+      ['dogs-03', 0.75, '', '', 'A puppy resting on the mosaic floor beside a plant.'],
+      ['dogs-02', 0.75, '', '', 'A puppy giving a kiss in the car.'],
+      ['dogs-06', 1.3333, '', '', 'The puppy asleep on the big dog.'],
+      ['dogs-07', 1.3333, '', '', 'The two dogs playing on the bed.'],
+      ['dogs-08', 1.3333, '', '', 'The two dogs asleep together on the bed.'],
+      ['dogs-05', 0.75, '', '', 'A happy puppy riding in the farm cart.'],
+      ['dogs-09', 1.3333, '', '', 'The two dogs asleep on their beds on the porch.'],
+      ['dogs-10', 0.75, '', '', 'The two dogs curled up together on the floor.'],
+      ['dogs-11', 0.75, '', '', 'The two dogs asleep on the floor, seen from above.'],
+      ['dogs-12', 1.3333, '', '', 'The two dogs rolling in the grass by the vines.'],
+      ['dogs-14', 1.3333, '', '', 'The two dogs resting by the wood stove in the evening.'],
+      ['dogs-13', 0.75, '', '', 'A puppy cuddled at the kitchen table.'],
+      ['dogs-15', 1.3333, '', '', 'A muddy puppy after digging.'],
+      ['dogs-19', 0.75, '', '', 'A puppy looking out over the water from the vineyard.'],
+      ['dogs-17', 1.3333, '', '', 'Carrot time for the two dogs.'],
+      ['dogs-18', 1.3333, '', '', 'The two dogs asleep nose to nose.'],
+      ['dogs-16', 1.3333, '', '', 'The two dogs chewing carrots on their bed.'],
+      ['dogs-20', 1.3333, '', '', 'The two dogs resting by the vineyard fence.']] },
+  ];
+  function initLife(groups, label) {
     const hero = $('.mead-page-hero', root);
     const all = [];
-    const html = LIFE.map((g) => {
-      const shots = g.s.map((s) => { const i = all.push([s[0], '', s[2]]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${s[3] ? ' ' + s[3] : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(s[2])}"><img src="img/${s[0]}-t.webp" alt="${esc(s[2])}" loading="lazy" decoding="async"></button><figcaption>${esc(s[2])}</figcaption></figure>`; }).join('');
+    const html = groups.map((g) => {
+      const shots = g.s.map((s) => { const cap = g.nocap ? '' : s[2], alt = s[4] || s[2]; const i = all.push([s[0], '', cap, alt]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${s[3] ? ' ' + s[3] : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}-t.webp" alt="${esc(alt)}" loading="lazy" decoding="async"></button>${cap ? `<figcaption>${esc(cap)}</figcaption>` : ''}</figure>`; }).join('');
+      if (!g.t) return `<div class="gam-farm-day gam-solo"><div class="gam-life-shots">${shots}</div></div>`;
       return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${g.n}</b><span>${g.k}</span><em>${g.t}</em></div><div class="gam-life-shots">${shots}</div></div>`;
     }).join('');
     const sec = document.createElement('section');
     sec.className = 'gam-farm gam-life';
-    sec.setAttribute('aria-label', 'Life on Salt Spring, photographs');
+    sec.setAttribute('aria-label', label);
     sec.innerHTML = html;
     hero.after(sec);
     sec.addEventListener('click', (e) => { const b = e.target.closest('[data-shot]'); if (b) lbOpen(all, +b.dataset.shot); });
@@ -455,6 +484,7 @@
     const my = ++token;
     if (!first) { veil.classList.add('on'); await wait(330); if (my !== token) return; }
     teardown();
+    lbClose(); // a photo left open must not cover the next page
     window.scrollTo(0, 0);
     const t = tpl('t-' + route);
     const meta = JSON.parse(t.dataset.meta || '{}');
@@ -471,7 +501,8 @@
     if (route === 'store') initStore();
     if (KIND[route]) initMead(route, cleanups);
     if (route === 'building-the-farm') initFarm();
-    if (route === 'life-on-salt-spring') initLife();
+    if (route === 'life-on-salt-spring') initLife(LIFE, 'Life on Salt Spring, photographs');
+    if (route === 'the-dogs') initLife(DOGS, 'The dogs, photographs');
     if (route === 'where-to-buy') initWhereToBuy();
     if (route === 'contact') initContact();
     if (route === 'cart') renderCart();
