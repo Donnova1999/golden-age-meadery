@@ -316,7 +316,7 @@
       ['life-05', 1.3333, 'Early morning sun over the meadow.'],
       ['life-06', 1.3333, 'A snowy winter sunset over the farm.'],
       ['life-07', 1.3333, 'Sunset on the water between the islands.'],
-      ['life-08', 1.3333, 'Looking out over the valley to the Gulf Islands.']] },
+      ['life-08', 1.3333, 'The view from the top of Salt Spring.']] },
     { n: '02', k: 'Terraces and stone walls', t: 'The vineyard', s: [
       ['life-09', 1.3333, 'The vines in full leaf on a summer evening.', 'w'],
       ['life-10', 1.3333, 'Spring in the rows, before the vines leaf out.'],
@@ -327,7 +327,7 @@
       ['life-14', 0.75, 'Red currants catching the evening sun.'],
       ['life-15', 0.75, 'Red currant bushes under the bird netting.'],
       ['life-16', 0.75, 'Black currants ready for picking.'],
-      ['life-17', 0.75, 'Dark berries ripening behind the netting.'],
+      ['life-17', 0.75, 'Jostaberries ripening behind the netting.'],
       ['life-18', 0.75, 'Raspberries among the daisies.']] },
     { n: '04', k: 'Our two companions', t: 'The dogs', s: [
       ['life-19', 1.3333, 'Resting on the porch.'],
