@@ -20,9 +20,7 @@
     m: { base: 'scene/md-real-m.webp', mask: 'scene/md-real-mask-m.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4,
          water: 1, dry: 'scene/md-real-dry-m.webp', dryBox: [830, 248, 232, 374] },
   };
-  // content rects of each petal in md-petals.webp (x, y, w, h)
-  const PETALS = [[18, 4, 283, 192], [346, 4, 267, 192], [661, 4, 278, 192], [978, 4, 283, 192], [1301, 4, 278, 192]];
-  // phone (client 24 Oct): the real rose petals lying on the table in Miki's picture, cut out (x, y, w, h in md-real-petals.webp)
+  // the real rose petals lying on the table in Miki's picture, cut out (x, y, w, h in md-real-petals.webp); phone 24 Oct, computers 3 Nov
   const PETALS_M = [[6, 6, 112, 57], [130, 6, 108, 64], [250, 6, 146, 80]];
 
   const VS = 'attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
@@ -217,16 +215,16 @@
 
       /* ---------- petals ---------- */
       const pctx = pc.getContext('2d');
-      let sheet = null, sheetM = null;
+      let sheetM = null;
       const petals = [];
-      loadImg(ctx.img('scene/md-petals.webp')).then((i) => { sheet = i; }).catch(() => {});
       loadImg(ctx.img('scene/md-real-petals.webp')).then((i) => { sheetM = i; }).catch(() => {});
       function spawn(p, initial) {
         const mob = comp === 'm';
         p.near = Math.random() < 0.18;
-        p.size = (mob ? W * rnd(0.065, 0.09) : W * rnd(0.04, 0.056)) * (p.near ? (mob ? 1.2 : 1.35) : 1);
-        // phone: a pause before each petal drifts in again, so only a few fall at a time
-        p.wait = mob && !initial ? rnd(1.5, 5.5) : 0;
+        // both layouts use the real petals from Miki's picture (client, 3 Nov); on computers sized to the wide scene's roses
+        p.size = (mob ? W * rnd(0.065, 0.09) : W * rnd(0.036, 0.05)) * (p.near ? (mob ? 1.2 : 1.3) : 1);
+        // a pause before each petal drifts in again, so only a few fall at a time
+        p.wait = initial ? 0 : (mob ? rnd(1.5, 5.5) : rnd(0.5, 2.5));
         p.x0 = rnd(-0.05, 0.95) * W;
         p.y = initial ? rnd(-0.3, 0.9) * H : -p.size * rnd(1.0, 2.6);
         p.vy = (H / rnd(10, 14)) * (p.near ? 1.2 : 1); // px per second
@@ -240,20 +238,19 @@
         p.tiltW = rnd(1.3, 2.2);
         p.tph = rnd(0, 6.28);
         p.age = 0;
-        p.spr = (Math.random() * (mob ? PETALS_M.length : PETALS.length)) | 0;
+        p.spr = (Math.random() * PETALS_M.length) | 0;
       }
       function initPetals() {
         petals.length = 0;
         if (reduced) return;
-        const n = comp === 'm' ? 3 : 6;
+        const n = comp === 'm' ? 3 : 7;
         for (let i = 0; i < n; i++) { const p = {}; spawn(p, true); petals.push(p); }
       }
       function drawPetals(dt) {
         const dpr = pc.width / W;
         pctx.setTransform(1, 0, 0, 1, 0, 0);
         pctx.clearRect(0, 0, pc.width, pc.height);
-        const mob = comp === 'm';
-        const sh = mob ? sheetM : sheet, rects = mob ? PETALS_M : PETALS;
+        const sh = sheetM, rects = PETALS_M;
         if (!sh) return;
         const wind = 0.6 + gust * 1.4;
         for (const p of petals) {
@@ -408,7 +405,7 @@
             GAM.loseGL(gl);
           }
           gl = null;
-          sheet = null; sheetM = null;
+          sheetM = null;
           petals.length = 0;
           still.removeAttribute('src');
           frame.style.background = '';

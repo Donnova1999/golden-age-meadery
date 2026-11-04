@@ -76,41 +76,56 @@
     return buf;
   };
 
-  /* Shared fire ambience (client 24 Oct): the Ancient Lore fire, used on both fire pages, kept quiet in the background.
-     A low simmer, soft pops and small crackles. Returns a cleanup fn. */
+  /* Shared fire ambience, used on both fire pages, quiet in the background.
+     Client 3 Nov: crackling only, no bubbling. Everything is made from noise (no pitched tones, which read as a
+     bubbling pot): a soft breath of flame, small crackles in little clusters, and now and then a louder snap. */
   GAM.fireAmbience = function (ac, out, level) {
     const timers = [];
     let stopped = false;
+    const rnd = (a, b) => a + Math.random() * (b - a);
     const bus = ac.createGain(); bus.gain.value = level == null ? 0.55 : level; bus.connect(out);
-    const rum = ac.createBufferSource(); rum.buffer = GAM.noiseBuffer(ac, 'brown', 6); rum.loop = true;
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260;
-    const rg = ac.createGain(); rg.gain.value = 0.09;
-    rum.connect(lp).connect(rg).connect(bus); rum.start();
-    const pop = () => {
+    // breath of the flames: band-limited pink noise, very low, swelling slowly
+    const air = ac.createBufferSource(); air.buffer = GAM.noiseBuffer(ac, 'pink', 6); air.loop = true;
+    const ahp = ac.createBiquadFilter(); ahp.type = 'highpass'; ahp.frequency.value = 350;
+    const alp = ac.createBiquadFilter(); alp.type = 'lowpass'; alp.frequency.value = 2600;
+    const ag = ac.createGain(); ag.gain.value = 0.02;
+    air.connect(ahp).connect(alp).connect(ag).connect(bus); air.start();
+    const breathe = () => {
       if (stopped) return;
-      const t = ac.currentTime + 0.01;
-      const o = ac.createOscillator(); o.type = 'sine';
-      const f0 = 180 + Math.random() * 220;
-      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.6 + Math.random() * 0.8), t + 0.07);
-      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
-      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.04, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-      o.connect(f).connect(g).connect(bus); o.start(t); o.stop(t + 0.15);
-      timers.push(setTimeout(pop, 120 + Math.random() * (Math.random() < 0.2 ? 900 : 380)));
+      ag.gain.setTargetAtTime(rnd(0.012, 0.03), ac.currentTime, rnd(0.25, 0.8));
+      timers.push(setTimeout(breathe, rnd(500, 1600)));
+    };
+    // one tiny click of burning wood: a few milliseconds of filtered noise
+    const click = (t, amp, lo, hi, dur) => {
+      const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'white', 2);
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = lo;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = hi;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + 0.0015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(hp).connect(lp).connect(g).connect(bus); s.start(t, Math.random() * 1.8); s.stop(t + dur + 0.02);
     };
     const crackle = () => {
       if (stopped) return;
-      const t = ac.currentTime + 0.01;
-      const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'white', 2);
-      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800 + Math.random() * 2000;
-      const g = ac.createGain(); const d = 0.01 + Math.random() * 0.025;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03 + Math.random() * 0.04, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      s.connect(hp).connect(g).connect(bus); s.start(t, Math.random()); s.stop(t + d + 0.02);
-      timers.push(setTimeout(crackle, 180 + Math.random() * 1100));
+      let t = ac.currentTime + 0.02;
+      const n = Math.random() < 0.45 ? 1 : 2 + ((Math.random() * 4) | 0);
+      for (let k = 0; k < n; k++) {
+        click(t, rnd(0.05, 0.17), rnd(1000, 3000), rnd(6000, 11000), rnd(0.004, 0.018));
+        t += rnd(0.012, 0.06);
+      }
+      timers.push(setTimeout(crackle, rnd(140, 950)));
     };
-    pop(); crackle();
+    const snap = () => {
+      if (stopped) return;
+      const t = ac.currentTime + 0.02;
+      click(t, rnd(0.13, 0.22), rnd(500, 1100), rnd(5000, 8000), rnd(0.025, 0.05));
+      if (Math.random() < 0.6) click(t + rnd(0.02, 0.05), rnd(0.06, 0.12), 1500, 9000, rnd(0.004, 0.012));
+      timers.push(setTimeout(snap, rnd(2200, 6500)));
+    };
+    breathe(); crackle();
+    timers.push(setTimeout(snap, rnd(800, 2500)));
     return () => {
       stopped = true; timers.forEach(clearTimeout);
-      try { rum.stop(); } catch (e) {}
+      try { air.stop(); } catch (e) {}
       try { bus.disconnect(); } catch (e) {}
     };
   };
