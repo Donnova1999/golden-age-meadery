@@ -212,13 +212,22 @@ void main(){
       const fx = document.createElement('canvas');
       fx.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
       root.appendChild(fx);
+      // computers (client, 5 Nov): data-fit="contain" shows the whole picture at full height in the middle,
+      // with a soft blurred copy of it filling the rest of the wide frame
+      let backdrop = null;
+      if (frame.dataset.fit === 'contain') {
+        backdrop = document.createElement('img');
+        backdrop.alt = ''; backdrop.setAttribute('aria-hidden', 'true'); backdrop.decoding = 'async';
+        backdrop.style.cssText = 'position:absolute;left:-40px;top:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(26px) brightness(.5) saturate(1.05);pointer-events:none;user-select:none';
+        frame.appendChild(backdrop);
+      }
       frame.appendChild(root);
       const fxc = fx.getContext('2d');
 
       const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false, preserveDrawingBuffer: false });
       let alive = true, paused = false, raf = 0, t0 = performance.now(), tNow = 0, lastFrame = 0;
       let mode = null, L = null, tex = null, texNF = null, texM = null, texV = null, vid = null, vidReady = false, texReady = false, imgCache = {};
-      let map = { s: 1, ox: 0, oy: 0 }, fw = 1, fh = 1, dpr = 1;
+      let map = { s: 1, ox: 0, oy: 0 }, fw = 1, fh = 1, dpr = 1, frameW = 1;
       let progBase, progPage, bufFull, pageBuf = {}, idxBuf, idxCount = 0;
       const R = rnd(7);
       const candlePh = Array.from({ length: 12 }, () => [R() * 6.28, R() * 6.28, R() * 6.28, R() * 6.28]);
@@ -313,10 +322,21 @@ void main(){
       }
       function chooseMode() {
         const r = frame.getBoundingClientRect();
-        fw = Math.max(1, r.width); fh = Math.max(1, r.height);
+        fw = Math.max(1, r.width); fh = Math.max(1, r.height); frameW = fw;
         // computers (client, 5 Nov): data-real keeps Miki's realistic picture even in the wide full-screen frame
-        if (frame.dataset.real) return 'mob';
-        return fw < fh ? 'mob' : 'desk';
+        const m = frame.dataset.real ? 'mob' : (fw < fh ? 'mob' : 'desk');
+        if (frame.dataset.fit === 'contain') {
+          // the scene box takes the picture's own shape, centred; everything inside is laid out in that box
+          const Lm = LAYOUT[m], s = Math.min(fw / Lm.w, fh / Lm.h);
+          const rw = Lm.w * s, rh = Lm.h * s;
+          root.style.right = 'auto'; root.style.bottom = 'auto';
+          root.style.left = ((fw - rw) / 2).toFixed(2) + 'px'; root.style.top = ((fh - rh) / 2).toFixed(2) + 'px';
+          root.style.width = rw.toFixed(2) + 'px'; root.style.height = rh.toFixed(2) + 'px';
+          const fade = rw < fw - 1 ? 'linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)' : '';
+          root.style.webkitMaskImage = fade; root.style.maskImage = fade;
+          fw = rw; fh = rh;
+        }
+        return m;
       }
       function computeMap() {
         const s = Math.max(fw / L.w, fh / L.h);
@@ -329,7 +349,8 @@ void main(){
         texReady = false;
         computeMap();
         buildBottles();
-        const big = fw > 760 && L.imgHi;
+        const big = frameW > 760 && L.imgHi;
+        if (backdrop) backdrop.src = ctx.img(L.img);
         const src = ctx.img(big ? L.imgHi : L.img);
         if (!gl) { root.style.backgroundImage = 'url("' + src + '")'; root.style.backgroundPosition = '50% ' + (100 * Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')))) + '%'; return; }
         const want = m;

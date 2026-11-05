@@ -71,9 +71,18 @@
         return r.width < r.height ? SETS.mob : SETS.desk;
       }
 
+      // computers (client, 5 Nov): data-fit="contain" shows the whole picture at full height in the middle,
+      // with a soft blurred copy of it filling the rest of the wide frame
+      let backdrop = null;
+      if (frame.dataset.fit === 'contain') {
+        backdrop = el('img', 'position:absolute;left:-40px;top:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(26px) brightness(.5) saturate(1.05);pointer-events:none;user-select:none', frame);
+        backdrop.alt = ''; backdrop.setAttribute('aria-hidden', 'true'); backdrop.decoding = 'async';
+      }
+
       function build() {
         if (root) teardownLayers();
         set = choose();
+        if (backdrop) backdrop.src = ctx.img(set.bg);
         // the picture keeps its own proportions and covers the frame (cropped around data-focus, see resize)
         root = el('div', 'position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;background:#120a06;contain:strict', frame);
         root.className = 'hf-photo';
@@ -141,10 +150,14 @@
         dpr = Math.min(window.devicePixelRatio || 1, 2);
         const fw = Math.max(1, r.width), fh = Math.max(1, r.height);
         // cover: scale the picture to fill the frame, then slide it so data-focus (0 top .. 1 bottom) stays in view
-        const s = Math.max(fw / set.w, fh / set.h);
+        const contain = frame.dataset.fit === 'contain';
+        const s = contain ? Math.min(fw / set.w, fh / set.h) : Math.max(fw / set.w, fh / set.h);
         W = set.w * s; H = set.h * s;
-        const fy = Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')));
+        const fy = contain ? 0.5 : Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')));
         offX = (fw - W) / 2; offY = (fh - H) * fy;
+        // soft left/right edges when the picture sits in a wider frame
+        const fade = contain && W < fw - 1 ? 'linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)' : '';
+        root.style.webkitMaskImage = fade; root.style.maskImage = fade;
         root.style.left = offX.toFixed(2) + 'px'; root.style.top = offY.toFixed(2) + 'px';
         root.style.width = W.toFixed(2) + 'px'; root.style.height = H.toFixed(2) + 'px';
         // the effects canvas only covers the part of the picture that is on screen
