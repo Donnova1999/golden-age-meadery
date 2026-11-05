@@ -35,6 +35,7 @@
     // the closed book became the open one (pages turn), the cauldron fire is real video, candles sway
     mob: {
       img: 'scene/al-real-m.webp', nf: 'scene/al-real-nf-m.webp', mask: 'scene/al-real-mask-m.png', w: 945, h: 1304,
+      imgHi: 'scene/al-real-d.webp', nfHi: 'scene/al-real-nf-d.webp', // sharper pictures for big screens
       front: null,
       bottles: [
         { src: 'scene/al-real-750.webp', cx: 196.0, base: 943.0, h: 640.0, ar: 0.21327, lit: 0.8 },
@@ -313,19 +314,24 @@ void main(){
       function chooseMode() {
         const r = frame.getBoundingClientRect();
         fw = Math.max(1, r.width); fh = Math.max(1, r.height);
+        // computers (client, 5 Nov): data-real keeps Miki's realistic picture even in the wide full-screen frame
+        if (frame.dataset.real) return 'mob';
         return fw < fh ? 'mob' : 'desk';
       }
       function computeMap() {
         const s = Math.max(fw / L.w, fh / L.h);
-        map = { s, ox: (fw - L.w * s) / 2, oy: (fh - L.h * s) / 2 };
+        // cover, cropped around data-focus (0 top .. 1 bottom)
+        const fy = Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')));
+        map = { s, ox: (fw - L.w * s) / 2, oy: (fh - L.h * s) * fy };
       }
       function setMode(m) {
         mode = m; L = LAYOUT[m];
         texReady = false;
         computeMap();
         buildBottles();
-        const src = ctx.img(L.img);
-        if (!gl) { root.style.backgroundImage = 'url("' + src + '")'; return; }
+        const big = fw > 760 && L.imgHi;
+        const src = ctx.img(big ? L.imgHi : L.img);
+        if (!gl) { root.style.backgroundImage = 'url("' + src + '")'; root.style.backgroundPosition = '50% ' + (100 * Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')))) + '%'; return; }
         const want = m;
         const up = (t, im) => {
           gl.bindTexture(gl.TEXTURE_2D, t);
@@ -339,7 +345,7 @@ void main(){
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         };
         setupVideo();
-        Promise.all([loadImage(src), loadImage(ctx.img(L.nf)), loadImage(ctx.img(L.mask))]).then(([im, nf, mk]) => {
+        Promise.all([loadImage(src), loadImage(ctx.img(big ? L.nfHi : L.nf)), loadImage(ctx.img(L.mask))]).then(([im, nf, mk]) => {
           if (!alive || mode !== want) return;
           if (!tex) { tex = gl.createTexture(); texNF = gl.createTexture(); texM = gl.createTexture(); }
           up(tex, im); up(texNF, nf); up(texM, mk);

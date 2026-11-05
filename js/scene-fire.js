@@ -23,7 +23,7 @@
     // everything static is baked into one plate, only the fire (real video) and the lantern candle move
     mob: {
       w: 945, h: 1304, real: true,
-      bg: 'scene/hf-real-m.webp', mask: 'scene/hf-real-firemask-m.png', video: 'hf-loop.webm',
+      bg: 'scene/hf-real-m.webp', bgHi: 'scene/hf-real-d.webp', mask: 'scene/hf-real-firemask-m.png', video: 'hf-loop.webm',
       vid: { x: 174.9, y: 302.3, w: 960 * 1.3455, h: 540 * 1.3455 }, vidBlend: 'screen', vidFilter: 'brightness(.95) contrast(1.6)',
       // fireplace moved right (client 24 Oct) so the flames clear the big bottle
       candles: [{ x: 71.4, y: 447.3, wick: 469.6, r: 7 }],
@@ -57,7 +57,7 @@
       const reduced = !!ctx.reducedMotion;
       let set = null, root = null, video = null, fx = null, g = null, wrapEl = null, roomEl = null, bgImg = null;
       let raf = 0, paused = false, visible = true, alive = true, last = performance.now(), t = 0;
-      let W = 1, H = 1, dpr = 1, kx = 1, ky = 1;
+      let W = 1, H = 1, dpr = 1, kx = 1, ky = 1, offX = 0, offY = 0;
       let intensity = 0.7, targetI = 0.7;
       const smoke = [], sparks = [];
       let nextBurst = 2.5 + Math.random() * 3;
@@ -65,6 +65,8 @@
       let soundPop = null;
 
       function choose() {
+        // computers (client, 5 Nov): data-real keeps Miki's realistic picture even in the wide full-screen frame
+        if (frame.dataset.real) return SETS.mob;
         const r = frame.getBoundingClientRect();
         return r.width < r.height ? SETS.mob : SETS.desk;
       }
@@ -72,10 +74,12 @@
       function build() {
         if (root) teardownLayers();
         set = choose();
-        root = el('div', 'position:absolute;inset:0;overflow:hidden;background:#120a06;contain:strict', frame);
+        // the picture keeps its own proportions and covers the frame (cropped around data-focus, see resize)
+        root = el('div', 'position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;background:#120a06;contain:strict', frame);
         root.className = 'hf-photo';
         const imgCss = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;user-select:none;pointer-events:none';
-        bgImg = el('img', imgCss, root); bgImg.alt = ''; bgImg.decoding = 'async'; bgImg.src = ctx.img(set.bg);
+        bgImg = el('img', imgCss, root); bgImg.alt = ''; bgImg.decoding = 'async';
+        bgImg.src = ctx.img(set.bgHi && frame.getBoundingClientRect().width > 760 ? set.bgHi : set.bg); // sharper picture for big screens
         // real fire: video masked into the fireplace opening
         const fire = el('div', 'position:absolute;inset:0;pointer-events:none;' +
           `-webkit-mask-image:url(${ctx.img(set.mask)});mask-image:url(${ctx.img(set.mask)});` +
@@ -94,7 +98,7 @@
         roomEl = el('div', 'position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;' +
           `background:radial-gradient(ellipse ${pct(set.fire.rx * 2.6, set.w)} ${pct(set.fire.ry * 2.4, set.h)} at ${pct(set.fire.x, set.w)} ${pct(set.fire.y, set.h)}, rgba(255,130,50,.16), rgba(255,110,40,.05) 45%, rgba(0,0,0,0) 70%)`, root);
         // candles, smoke, sparks (behind the table)
-        fx = el('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none', root);
+        fx = el('canvas', 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none', root); // sized to the visible part in resize()
         g = fx.getContext('2d');
         if (set.real) {
           // realistic plate: bottles, coupe and table are part of the picture
@@ -135,8 +139,18 @@
         if (!fx) return;
         const r = frame.getBoundingClientRect();
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        W = Math.max(1, r.width); H = Math.max(1, r.height);
-        fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr);
+        const fw = Math.max(1, r.width), fh = Math.max(1, r.height);
+        // cover: scale the picture to fill the frame, then slide it so data-focus (0 top .. 1 bottom) stays in view
+        const s = Math.max(fw / set.w, fh / set.h);
+        W = set.w * s; H = set.h * s;
+        const fy = Math.min(1, Math.max(0, parseFloat(frame.dataset.focus || '0.5')));
+        offX = (fw - W) / 2; offY = (fh - H) * fy;
+        root.style.left = offX.toFixed(2) + 'px'; root.style.top = offY.toFixed(2) + 'px';
+        root.style.width = W.toFixed(2) + 'px'; root.style.height = H.toFixed(2) + 'px';
+        // the effects canvas only covers the part of the picture that is on screen
+        fx.style.left = (-offX).toFixed(2) + 'px'; fx.style.top = (-offY).toFixed(2) + 'px';
+        fx.style.width = fw + 'px'; fx.style.height = fh + 'px';
+        fx.width = Math.round(fw * dpr); fx.height = Math.round(fh * dpr);
         kx = W / set.w; ky = H / set.h;
       }
 
@@ -273,6 +287,7 @@
         if (roomEl) roomEl.style.opacity = (0.32 + flick * 0.4).toFixed(3);
         g.setTransform(1, 0, 0, 1, 0, 0);
         g.clearRect(0, 0, fx.width, fx.height);
+        g.setTransform(1, 0, 0, 1, offX * dpr, offY * dpr); // draw in picture coordinates
         set.candles.forEach((c, i) => drawCandle(c, i, t, false));
         drawSmoke(dt);
         // trickle of sparks + occasional bursts with a pop (the realistic phone picture keeps just the pop)
@@ -289,7 +304,7 @@
 
       function drawStill() {
         if (!fx) return;
-        const go = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, fx.width, fx.height); set.candles.forEach((c, i) => drawCandle(c, i, 0, true)); };
+        const go = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, fx.width, fx.height); g.setTransform(1, 0, 0, 1, offX * dpr, offY * dpr); set.candles.forEach((c, i) => drawCandle(c, i, 0, true)); };
         if (bgImg.complete) go(); else bgImg.addEventListener('load', go, { once: true });
       }
 
