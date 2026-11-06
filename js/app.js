@@ -496,9 +496,35 @@
     root.replaceChildren();
     current = null;
   }
+  // A tab left open keeps showing the version it loaded. Watch version.json and, when a newer
+  // build goes live, switch to it straight away on load, or at the next page change / tab return.
+  const UPD = (() => {
+    const cur = window.GAM_BUILD, live = /^https?:$/.test(location.protocol) && !/claude|localhost|127\.0\.0\.1/.test(location.hostname);
+    let next = null, last = 0, busy = false;
+    try { if (/[?&]v=/.test(location.search) && history.replaceState) history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+    function reload(route) {
+      try { if (sessionStorage.getItem('gam-upd') === next) return false; sessionStorage.setItem('gam-upd', next); } catch (e) {}
+      location.replace(location.pathname + '?v=' + encodeURIComponent(next) + '#' + (route || location.hash.slice(1) || 'home'));
+      return true;
+    }
+    function check(now) {
+      const t = Date.now();
+      if (!live || !cur || busy || (!now && t - last < 60000)) return; last = t; busy = true;
+      fetch('version.json?t=' + t, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+        if (j && j.build && j.build !== cur && j.build > cur) { next = String(j.build); if (now) reload(); }
+      }).catch(() => {}).finally(() => { busy = false; });
+    }
+    if (live) {
+      document.addEventListener('visibilitychange', () => { if (document.hidden) return; if (next) reload(); else check(true); });
+      setInterval(() => check(false), 5 * 60000);
+      check(true);
+    }
+    return { get next() { return next; }, reload };
+  })();
   async function go(route, first) {
     if (!ROUTES.includes(route)) route = 'home';
     if (current && current.route === route) return;
+    if (!first && UPD.next && UPD.reload(route)) return; // a newer version is live: open the page from it
     const my = ++token;
     if (!first) { veil.classList.add('on'); await wait(330); if (my !== token) return; }
     teardown();
