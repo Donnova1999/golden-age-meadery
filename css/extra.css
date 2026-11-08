@@ -75,7 +75,7 @@ html, body { background: #161513; }
 
 /* ---------- page photographs (client, 21 Oct) ---------- */
 /* Home: snowy winter sunrise over the farm behind the hero (client, 2 Nov) */
-.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-sunrise.webp?v=202611060230) 50% 46%/cover no-repeat}
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-sunrise.webp?v=202611081000) 50% 46%/cover no-repeat}
 .mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
 .mead-home[data-route=home] .mead-hero-shade{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
@@ -94,11 +94,11 @@ html, body { background: #161513; }
 .mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
 .mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
 .mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
-.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store-bay.webp?v=202611060230);background-position:50% 50%}  /* the bay in spring (client, 3 Nov) */
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store-bay.webp?v=202611081000);background-position:50% 50%}  /* the bay in spring (client, 3 Nov) */
 .mead-home[data-route=store]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
-.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202611060230);background-position:50% 40%}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202611081000);background-position:50% 40%}
 .mead-home[data-route=contact]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
@@ -123,7 +123,7 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
 .gam-age { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 16px; background: #0e0c0a; overflow: auto;
   transition: opacity .45s ease, visibility .45s; }
 .gam-age.out { opacity: 0; visibility: hidden; }
-.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-sunrise.webp?v=202611060230) 62% 48% / cover no-repeat;
+.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-sunrise.webp?v=202611081000) 62% 48% / cover no-repeat;
   filter: blur(3px) brightness(.72) saturate(1.05); transform: scale(1.02); }
 .gam-age::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
 .gam-age-card { position: relative; z-index: 1; width: min(460px, 100%); text-align: center; padding: 40px 34px 28px; color: #f3ead6;
@@ -220,3 +220,34 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
   .gam-life-shots figure { flex: 0 0 calc(50% - 5px); }  /* portraits: two to a row, all the same size */
   .gam-life-shots figure.l { flex: 0 0 100%; }
 }
+
+/* ---------- client corrections, 7-8 Nov ---------- */
+/* The Dogs: on phones, portraits pair up two to a row (order set per photo) */
+@media (max-width: 760px) {
+  .gam-po figure { order: var(--po, 0); }
+  .gam-po .gam-br { display: none; }
+}
+/* home + store cards: intro line in bold, card name links to the mead page */
+.mead-collection-heading p strong { font-weight: 700; }
+.mead-product-title h3 a { color: inherit; text-decoration: none; }
+.mead-product-title h3 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+/* Hearth & Fire: name in gold; size buttons + Add to cart in a richer gold */
+[data-skin=fire] .mead-pdp h1 { background: linear-gradient(180deg, #f9e19a 0%, #e3b548 55%, #b98a2c 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-skin=fire] .gam-size span { border-color: rgba(222, 172, 62, .6); }
+[data-skin=fire] .gam-size b { color: #e8bb52; }
+[data-skin=fire] .gam-size label:hover span { border-color: #e3b548; }
+[data-skin=fire] .gam-size input:checked + span,
+[data-skin=fire] .mead-pdp-info button.bg-primary { background: linear-gradient(135deg, #f7da80 0%, #ddab3d 50%, #b8872b 100%); border-color: #d9a63a; color: #1c1304; }
+[data-skin=fire] .gam-size input:checked + span b { color: #1c1304; }
+[data-skin=fire] .mead-pdp-info button.bg-primary:hover { filter: brightness(1.06); }
+/* Ancient Lore: title, size buttons + Add to cart in the blue of the bottle label */
+[data-skin=library] .mead-pdp h1 { color: #3a8ee0; }
+[data-skin=library] .gam-size span { border-color: rgba(40, 120, 205, .7); }
+[data-skin=library] .gam-size b { color: #6fb2f2; }
+[data-skin=library] .gam-size label:hover span { border-color: #3a8ee0; }
+[data-skin=library] .gam-size input:checked + span,
+[data-skin=library] .mead-pdp-info button.bg-primary { background: #1c6cc0; border-color: #1c6cc0; color: #fff; }
+[data-skin=library] .gam-size input:checked + span b { color: #fff; }
+[data-skin=library] .mead-pdp-info button.bg-primary:hover { background: #2477cf; }
+/* About page: space between the paragraphs of a section (Our mission has four) */
+.mead-prose p + p { margin-top: 1em; }
