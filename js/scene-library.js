@@ -357,7 +357,8 @@ void main(){
         vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('aria-hidden', 'true');
         // sits behind the (opaque) WebGL canvas: never seen, but counts as on-screen so phones keep playing it
         vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';
-        vid.src = ctx.media(L.fireVid.src);
+        vid.src = ctx.media(GAM.loopVideoSrc(vid, L.fireVid.src));
+        { const v = vid; GAM.keepLooping(v, () => v === vid && !paused && !document.hidden); }
         vid.addEventListener('loadeddata', () => { vidReady = true; if (!paused && !document.hidden) vid.play().catch(() => {}); });
         vid.addEventListener('playing', () => { vidReady = true; });
         root.insertBefore(vid, cv);
@@ -617,6 +618,10 @@ void main(){
         lastFrame = now;
         tNow += dt;
         if (fixedT != null) tNow = fixedT;
+        if (freeze == null && !turnSounded && turnStart >= 0 && tNow >= turnStart) {
+          turnSounded = true;
+          ctx.sfx(pageSound);
+        }
         if (freeze == null && turnStart >= 0 && tNow > turnStart + turnDur) {
           turnStart = tNow + 10 + Math.random() * 4;
           turnSounded = false;
@@ -625,7 +630,27 @@ void main(){
         drawSmoke(tNow, dt);
       }
 
-      // sound (client 24 Oct): just the fire, quietly in the background (no page-turn sound)
+      // sound: the fire crackling quietly, plus the page turning again (client 7 Nov asked for it back)
+      function pageSound(ac, out) {
+        const t = ac.currentTime + 0.02;
+        const nb = GAM.noiseBuffer(ac, 'white', 2);
+        const src = ac.createBufferSource(); src.buffer = nb;
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
+        bp.frequency.setValueAtTime(900, t); bp.frequency.exponentialRampToValueAtTime(3200, t + 0.6); bp.frequency.exponentialRampToValueAtTime(1400, t + 1.3);
+        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.16, t + 0.18); g.gain.setValueAtTime(0.16, t + 0.5);
+        g.gain.exponentialRampToValueAtTime(0.05, t + 1.0); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
+        // flutter: amplitude-modulated crinkle near the end of the swing
+        const am = ac.createGain(); am.gain.value = 0.6;
+        const lfo = ac.createOscillator(); lfo.frequency.value = 23; const lfoG = ac.createGain(); lfoG.gain.value = 0.4;
+        lfo.connect(lfoG).connect(am.gain);
+        src.connect(bp).connect(am).connect(g).connect(out);
+        src.start(t, Math.random()); src.stop(t + 1.6); lfo.start(t); lfo.stop(t + 1.6);
+        // soft landing tap
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(140, t + 1.75); o.frequency.exponentialRampToValueAtTime(70, t + 1.95);
+        const og = ac.createGain(); og.gain.setValueAtTime(0.0001, t + 1.74); og.gain.exponentialRampToValueAtTime(0.06, t + 1.77); og.gain.exponentialRampToValueAtTime(0.0001, t + 2.0);
+        o.connect(og).connect(out); o.start(t + 1.74); o.stop(t + 2.05);
+      }
       ctx.onSound((ac, out) => GAM.fireAmbience(ac, out));
 
       document.addEventListener('visibilitychange', syncVid);

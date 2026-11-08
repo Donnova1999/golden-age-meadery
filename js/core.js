@@ -78,23 +78,13 @@
 
   /* Shared fire ambience, used on both fire pages, quiet in the background.
      Client 3 Nov: crackling only, no bubbling. Everything is made from noise (no pitched tones, which read as a
-     bubbling pot): a soft breath of flame, small crackles in little clusters, and now and then a louder snap. */
+     bubbling pot): small crackles in little clusters, and now and then a louder snap.
+     Client 7 Nov: no steady background hiss at all (it read as wind or waves), so crackles and snaps only. */
   GAM.fireAmbience = function (ac, out, level) {
     const timers = [];
     let stopped = false;
     const rnd = (a, b) => a + Math.random() * (b - a);
     const bus = ac.createGain(); bus.gain.value = level == null ? 0.55 : level; bus.connect(out);
-    // breath of the flames: band-limited pink noise, very low, swelling slowly
-    const air = ac.createBufferSource(); air.buffer = GAM.noiseBuffer(ac, 'pink', 6); air.loop = true;
-    const ahp = ac.createBiquadFilter(); ahp.type = 'highpass'; ahp.frequency.value = 350;
-    const alp = ac.createBiquadFilter(); alp.type = 'lowpass'; alp.frequency.value = 2600;
-    const ag = ac.createGain(); ag.gain.value = 0.02;
-    air.connect(ahp).connect(alp).connect(ag).connect(bus); air.start();
-    const breathe = () => {
-      if (stopped) return;
-      ag.gain.setTargetAtTime(rnd(0.012, 0.03), ac.currentTime, rnd(0.25, 0.8));
-      timers.push(setTimeout(breathe, rnd(500, 1600)));
-    };
     // one tiny click of burning wood: a few milliseconds of filtered noise
     const click = (t, amp, lo, hi, dur) => {
       const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'white', 2);
@@ -121,13 +111,37 @@
       if (Math.random() < 0.6) click(t + rnd(0.02, 0.05), rnd(0.06, 0.12), 1500, 9000, rnd(0.004, 0.012));
       timers.push(setTimeout(snap, rnd(2200, 6500)));
     };
-    breathe(); crackle();
+    crackle();
     timers.push(setTimeout(snap, rnd(800, 2500)));
     return () => {
       stopped = true; timers.forEach(clearTimeout);
-      try { air.stop(); } catch (e) {}
       try { bus.disconnect(); } catch (e) {}
     };
+  };
+
+  /* Fire loop video (client 7 Nov: on some desktops the flames froze after about 10 seconds).
+     An H.264 MP4 loops reliably in every browser, so use it when the browser can play it (WebM stays as the
+     fallback), and keep an eye on the video: if a browser ever stalls it at the end, start it again. */
+  GAM.loopVideoSrc = function (video, name) {
+    const ok = video.canPlayType && video.canPlayType('video/mp4; codecs="avc1.640028"');
+    return ok ? name.replace(/\.webm$/, '.mp4') : name;
+  };
+  GAM.keepLooping = function (video, shouldPlay) {
+    let lastT = -1, still = 0;
+    const kick = () => {
+      try {
+        if (video.ended || (video.duration && video.currentTime >= video.duration - 0.06)) video.currentTime = 0;
+        const p = video.play(); if (p && p.catch) p.catch(() => {});
+      } catch (e) {}
+    };
+    video.addEventListener('ended', () => { if (shouldPlay()) kick(); });
+    const id = setInterval(() => {
+      if (!video.isConnected) { clearInterval(id); return; }
+      if (!shouldPlay() || video.readyState < 2) { lastT = -1; still = 0; return; }
+      const t = video.currentTime;
+      if (video.paused || t === lastT) { if (++still >= 2) { kick(); still = 0; } } else still = 0;
+      lastT = t;
+    }, 1000);
   };
 
   /* Light birdsong for the garden (client 24 Oct): a few birds singing softly at different distances. */

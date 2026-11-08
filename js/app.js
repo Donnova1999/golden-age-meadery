@@ -35,11 +35,11 @@
   const NAV_OF = { 'hearth-and-fire': 'Meads', 'midnight-dream': 'Meads', 'ancient-lore': 'Meads', 'building-the-farm': 'About Us', 'life-on-salt-spring': 'About Us', 'the-dogs': 'About Us', 'bella': 'About Us', 'boss': 'About Us', 'our-story': 'About Us', home: 'Home', store: 'Store', contact: 'Contact', 'where-to-buy': 'Store', cart: 'Store' };
 
   const FARM = [
-    { d: '25', m: 'March 2017', t: 'The field before', s: [['farm-01', 'w', 'The field as we found it, looking across to the water.'], ['farm-02', '', 'Clearing the brush piles with a mini excavator.'], ['farm-03', '', 'The upper field, still bare and stony.']] },
+    { d: '25', m: 'March 2017', t: 'The field after clearing out all the brush', s: [['farm-01', 'w', '', 'The cleared field, looking across to the water.'], ['farm-02', '', '', 'Clearing the brush piles with a mini excavator.'], ['farm-03', '', 'The upper field, still bare and stony.']] },
     { d: '6', m: 'May 2017', t: 'Clearing and fencing', s: [['farm-04', '', 'Standing in the middle of what would become the rows.'], ['farm-05', '', 'Digging the trench for the fence line.']] },
-    { d: '8', m: 'May 2017', t: 'Evening over the bay', s: [['farm-06', 'w', 'An evening view from the top of the field.']] },
-    { d: '22', m: 'May 2017', t: 'Posts in the ground', s: [['farm-07', 'w', 'Fence posts set and the first rows turned, with the hill across the water.']] },
-    { d: '6', m: 'June 2017', t: 'Planting day', s: [['farm-09', 'w', 'Fresh rows running down the slope, staked and ready.'], ['farm-08', 'p', 'A row ready for planting.'], ['farm-10', 'p', 'Planting by hand, one hole at a time.'], ['farm-11', 'p', 'Watering in each new plant.'], ['farm-12', 'p', 'Bucket after bucket from the top of the field.'], ['farm-13', 'w', 'The finished rows at the end of the day.']] },
+    { d: '8', m: 'May 2017', t: 'The evening view', s: [['farm-06', 'w', '', 'An evening view from the top of the field, over the bay.']] },
+    { d: '22', m: 'May 2017', t: 'Setting posts in rocky terrain', s: [['farm-07', 'w', '', 'Fence posts set in rocky ground and the first rows turned, with the hill across the water.']] },
+    { d: '6', m: 'June 2017', t: 'Planting day', s: [['farm-09', 'w', 'Fresh rows running down the slope, staked and ready.'], ['farm-08', 'p', 'A row ready for planting.'], ['farm-10', 'p', 'By hand one at a time.', 'Planting by hand, one hole at a time.'], ['farm-11', 'p', 'Watering each new plant.'], ['farm-12', 'p', '', 'Carrying buckets of water from the top of the field.'], ['farm-13', 'w', 'Plants aren\'t the only ones that need water!', 'The finished rows at the end of the day.']] },
   ];
 
   const root = $('#root'), veil = $('#gamVeil'), toastEl = $('#gamToast');
@@ -230,11 +230,11 @@
     if (thumbsWrap && main) {
       if (route === 'midnight-dream') {
         const b = thumbsWrap.firstElementChild.cloneNode(true);
-        $('img', b).src = 'img/client-md-new.webp';
+        $('img', b).src = 'img/client-md-garden.webp';
         thumbsWrap.insertBefore(b, thumbsWrap.firstElementChild);
       }
       const thumbs = $$('button', thumbsWrap);
-      const list = thumbs.map((b, i) => ({ src: $('img', b).getAttribute('src'), alt: i === 0 && route === 'midnight-dream' ? 'Both Midnight Dream bottles, 200 ml and 750 ml, in warm light' : (b.dataset.alt || main.alt) }));
+      const list = thumbs.map((b, i) => ({ src: $('img', b).getAttribute('src'), alt: i === 0 && route === 'midnight-dream' ? 'Midnight Dream bottles on wooden stands outdoors, green trees behind' : (b.dataset.alt || main.alt) }));
       if (route !== 'midnight-dream') list[0].alt = main.alt;
       thumbs.forEach((b, i) => b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/\d+$/, String(i + 1))));
       let gi = 0;
@@ -292,10 +292,10 @@
   function initFarm() {
     const hero = $('.mead-page-hero', root);
     const lede = $('.mead-page-lede', root);
-    if (lede) lede.textContent = 'A family making mead by hand from old-world recipes. In spring 2017 we began turning an open, stony field on Salt Spring Island into our farm. These photos follow the first three months, from clearing the ground to planting the first rows.';
+    if (lede) lede.textContent = 'A family making mead by hand from old-world recipes. In spring 2017 we began turning an open, stony field on Salt Spring Island into our farm. These photos follow the first three months, from clearing the ground to planting the first rows of fruit.';
     const all = [];
     const html = FARM.map((day) => {
-      const shots = day.s.map((s) => { const i = all.push(s) - 1; return `<figure class="${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(s[2])}"><img src="img/${s[0]}.webp" alt="${esc(s[2])}" loading="lazy"></button><figcaption>${esc(s[2])}</figcaption></figure>`; }).join('');
+      const shots = day.s.map((s) => { const i = all.push(s) - 1, alt = s[3] || s[2]; return `<figure class="${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}.webp" alt="${esc(alt)}" loading="lazy"></button>${s[2] ? `<figcaption>${esc(s[2])}</figcaption>` : ''}</figure>`; }).join('');
       return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${day.d}</b><span>${day.m}</span><em>${day.t}</em></div><div class="gam-farm-shots">${shots}</div></div>`;
     }).join('');
     const sec = document.createElement('section');
@@ -336,10 +336,16 @@
   // The Dogs page (client, 2 Nov): the two grown dogs. 'br' ends a row (2 + 2 layout).
   const DOGS = [
     { s: [
-      ['life-19', 1.3333, 'Nap time.'],
-      ['life-20', 0.75, 'Two dogs, one bed.', 'br'],
-      ['dogs-12', 1.3333, '', '', 'The two dogs rolling in the grass by the vines.'],
-      ['dogs-20', 1.3333, '', '', 'The two dogs resting by the vineyard fence.']] },
+      ['life-19', 1.3333, 'Nap time.', '', '', 1],
+      ['life-20', 0.75, 'Two dogs, one bed.', 'br', '', 2],
+      ['dogs-12', 1.3333, '', '', 'The two dogs rolling in the grass by the vines.', 4],
+      ['dogs-20', 1.3333, '', 'br', 'The two dogs resting by the vineyard fence.', 5],
+      // 5 photos added 7 Nov (client). 6th item = order on phones, so portraits pair up two to a row there.
+      ['dogs-22', 0.563, '', '', 'One of the dogs sitting in the grass, looking up and smiling.', 6],
+      ['dogs-21', 1.3333, '', '', 'Both dogs lying in the grass beside the vines and the stone wall.', 8],
+      ['dogs-23', 0.563, '', 'br', 'Both dogs resting in the long grass along the fence line.', 7],
+      ['dogs-25', 0.563, '', '', 'One of the dogs standing on the path, tail up.', 3],
+      ['dogs-24', 1.3333, '', '', 'A dog sniffing along the stone wall under the netted vines.', 9]] },
   ];
   // Bella page (client, 2 Nov): every photo of Bella as a puppy, no captions for now (5th item is alt text only).
   // Order tuned so no photo sits alone on a row at common screen widths.
@@ -383,9 +389,10 @@
     const hero = $('.mead-page-hero', root);
     const all = [];
     const html = groups.map((g) => {
-      const shots = g.s.map((s) => { const cap = g.nocap ? '' : s[2], alt = s[4] || s[2]; const cls = (s[3] || '').split(' ').filter((c) => c && c !== 'br'); const br = (s[3] || '').split(' ').includes('br'); const i = all.push([s[0], '', cap, alt]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${cls.length ? ' ' + cls.join(' ') : ''}" style="--ar:${s[1]}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}-t.webp" alt="${esc(alt)}" loading="lazy" decoding="async"></button>${cap ? `<figcaption>${esc(cap)}</figcaption>` : ''}</figure>${br ? '<span class="gam-br" aria-hidden="true"></span>' : ''}`; }).join('');
-      if (!g.t) return `<div class="gam-farm-day gam-solo"><div class="gam-life-shots">${shots}</div></div>`;
-      return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${g.n}</b><span>${g.k}</span><em>${g.t}</em></div><div class="gam-life-shots">${shots}</div></div>`;
+      const shots = g.s.map((s) => { const cap = g.nocap ? '' : s[2], alt = s[4] || s[2]; const cls = (s[3] || '').split(' ').filter((c) => c && c !== 'br'); const br = (s[3] || '').split(' ').includes('br'); const i = all.push([s[0], '', cap, alt]) - 1; return `<figure class="${s[1] > 1 ? 'l' : 'p'}${cls.length ? ' ' + cls.join(' ') : ''}" style="--ar:${s[1]}${s[5] ? `;--po:${s[5]}` : ''}"><button type="button" data-shot="${i}" aria-label="Enlarge photo: ${esc(alt)}"><img src="img/${s[0]}-t.webp" alt="${esc(alt)}" loading="lazy" decoding="async"></button>${cap ? `<figcaption>${esc(cap)}</figcaption>` : ''}</figure>${br ? '<span class="gam-br" aria-hidden="true"></span>' : ''}`; }).join('');
+      const po = g.s.some((s) => s[5]) ? ' gam-po' : '';
+      if (!g.t) return `<div class="gam-farm-day gam-solo"><div class="gam-life-shots${po}">${shots}</div></div>`;
+      return `<div class="gam-farm-day"><div class="gam-farm-date"><b>${g.n}</b><span>${g.k}</span><em>${g.t}</em></div><div class="gam-life-shots${po}">${shots}</div></div>`;
     }).join('');
     const sec = document.createElement('section');
     sec.className = 'gam-farm gam-life';

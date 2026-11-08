@@ -87,8 +87,9 @@
             (set.real ? ';max-width:none;max-height:none' : ''), fire); // phone: the page CSS caps videos at 100% width, which squashed the fire
           video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
           video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true');
-          video.src = ctx.media(set.video);
+          video.src = ctx.media(GAM.loopVideoSrc(video, set.video));
           video.addEventListener('loadeddata', () => { try { video.playbackRate = 0.85; } catch (e) {} if (!paused && visible) video.play().catch(() => {}); });
+          GAM.keepLooping(video, () => !paused && visible && !document.hidden);
         }
         // warm light from the fire breathing over the room (screen, very soft)
         roomEl = el('div', 'position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;' +
