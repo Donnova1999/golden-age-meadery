@@ -620,7 +620,7 @@ void main(){
         if (fixedT != null) tNow = fixedT;
         if (freeze == null && !turnSounded && turnStart >= 0 && tNow >= turnStart) {
           turnSounded = true;
-          ctx.sfx(pageSound);
+          ctx.sfx((ac, out) => pageSound(ac, out, turnDur));
         }
         if (freeze == null && turnStart >= 0 && tNow > turnStart + turnDur) {
           turnStart = tNow + 10 + Math.random() * 4;
@@ -630,27 +630,50 @@ void main(){
         drawSmoke(tNow, dt);
       }
 
-      // sound: the fire crackling quietly, plus the page turning again (client 7 Nov asked for it back)
-      function pageSound(ac, out) {
-        const t = ac.currentTime + 0.02;
-        const nb = GAM.noiseBuffer(ac, 'white', 2);
-        const src = ac.createBufferSource(); src.buffer = nb;
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
-        bp.frequency.setValueAtTime(900, t); bp.frequency.exponentialRampToValueAtTime(3200, t + 0.6); bp.frequency.exponentialRampToValueAtTime(1400, t + 1.3);
-        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.16, t + 0.18); g.gain.setValueAtTime(0.16, t + 0.5);
-        g.gain.exponentialRampToValueAtTime(0.05, t + 1.0); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
-        // flutter: amplitude-modulated crinkle near the end of the swing
-        const am = ac.createGain(); am.gain.value = 0.6;
-        const lfo = ac.createOscillator(); lfo.frequency.value = 23; const lfoG = ac.createGain(); lfoG.gain.value = 0.4;
-        lfo.connect(lfoG).connect(am.gain);
-        src.connect(bp).connect(am).connect(g).connect(out);
-        src.start(t, Math.random()); src.stop(t + 1.6); lfo.start(t); lfo.stop(t + 1.6);
-        // soft landing tap
-        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(140, t + 1.75); o.frequency.exponentialRampToValueAtTime(70, t + 1.95);
-        const og = ac.createGain(); og.gain.setValueAtTime(0.0001, t + 1.74); og.gain.exponentialRampToValueAtTime(0.06, t + 1.77); og.gain.exponentialRampToValueAtTime(0.0001, t + 2.0);
-        o.connect(og).connect(out); o.start(t + 1.74); o.stop(t + 2.05);
+      // sound: the fire crackling quietly, plus the page turning (client 7 Nov asked for it back; 8 Nov: paper rustle version)
+      // Page turn (client 8 Nov: the flutter version "doesn't sound right"): a paper swoosh built on the first version,
+      // with a granular paper rustle while the page sweeps over and a soft settle + thump when it lands.
+      function pageSound(ac, out, dur) {
+        dur = dur || 2.5;
+        const t = ac.currentTime + 0.03, r = Math.random;
+        const bus = ac.createGain(); bus.gain.value = 0.9; bus.connect(out);
+        // air swoosh of the sweeping page
+        const s = ac.createBufferSource(); s.buffer = GAM.noiseBuffer(ac, 'pink', 4);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.7;
+        bp.frequency.setValueAtTime(600, t); bp.frequency.exponentialRampToValueAtTime(2400, t + dur * 0.45); bp.frequency.exponentialRampToValueAtTime(1100, t + dur * 0.85);
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + dur * 0.14);
+        g.gain.exponentialRampToValueAtTime(0.16, t + dur * 0.46); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.86);
+        s.connect(bp).connect(g).connect(bus); s.start(t, r() * 2); s.stop(t + dur);
+        // paper rustle: many tiny grains of filtered noise, densest while the page is in the air
+        const white = GAM.noiseBuffer(ac, 'white', 1);
+        const env = (x) => Math.exp(-Math.pow((x - 0.42) / 0.2, 2));
+        const n = 70;
+        for (let i = 0; i < n; i++) {
+          const x = 0.06 + 0.8 * Math.pow(r(), 0.9);
+          const ti = t + dur * x, a = 0.05 + 0.13 * env(x) * (0.4 + r() * 0.6);
+          const c = ac.createBufferSource(); c.buffer = white;
+          const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800 + r() * 4200; f.Q.value = 0.9 + r() * 1.2;
+          const cg = ac.createGain(); const d = 0.004 + r() * 0.012;
+          cg.gain.setValueAtTime(0.0001, ti); cg.gain.exponentialRampToValueAtTime(a, ti + 0.0015); cg.gain.exponentialRampToValueAtTime(0.0001, ti + d);
+          c.connect(f).connect(cg).connect(bus); c.start(ti, r() * 0.9, d + 0.02);
+        }
+        // the page settling: a few soft crinkles, then a gentle low thump as it lands
+        const tl = t + dur * 0.8;
+        for (let i = 0; i < 5; i++) {
+          const ti = tl + i * 0.035 + r() * 0.015;
+          const c = ac.createBufferSource(); c.buffer = white;
+          const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2000 + r() * 1800; f.Q.value = 1.1;
+          const cg = ac.createGain(); cg.gain.setValueAtTime(0.0001, ti); cg.gain.exponentialRampToValueAtTime(0.16 * (1 - i * 0.16), ti + 0.003); cg.gain.exponentialRampToValueAtTime(0.0001, ti + 0.03);
+          c.connect(f).connect(cg).connect(bus); c.start(ti, r() * 0.8, 0.05);
+        }
+        const th = ac.createBufferSource(); th.buffer = GAM.noiseBuffer(ac, 'brown', 4);
+        const tlp = ac.createBiquadFilter(); tlp.type = 'lowpass'; tlp.frequency.value = 220;
+        const tg = ac.createGain(); const tt = t + dur * 0.9;
+        tg.gain.setValueAtTime(0.0001, tt); tg.gain.exponentialRampToValueAtTime(0.4, tt + 0.012); tg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.18);
+        th.connect(tlp).connect(tg).connect(bus); th.start(tt, r(), 0.25);
       }
+
       ctx.onSound((ac, out) => GAM.fireAmbience(ac, out));
 
       document.addEventListener('visibilitychange', syncVid);

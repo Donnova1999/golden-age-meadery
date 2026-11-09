@@ -39,7 +39,7 @@
     { d: '6', m: 'May 2017', t: 'Clearing and fencing', s: [['farm-04', '', 'Standing in the middle of what would become the rows.'], ['farm-05', '', 'Digging the trench for the fence line.']] },
     { d: '8', m: 'May 2017', t: 'The evening view', s: [['farm-06', 'w', '', 'An evening view from the top of the field, over the bay.']] },
     { d: '22', m: 'May 2017', t: 'Setting posts in rocky terrain', s: [['farm-07', 'w', '', 'Fence posts set in rocky ground and the first rows turned, with the hill across the water.']] },
-    { d: '6', m: 'June 2017', t: 'Planting day', s: [['farm-09', 'w', 'Fresh rows running down the slope, staked and ready.'], ['farm-08', 'p', 'A row ready for planting.'], ['farm-10', 'p', 'By hand one at a time.', 'Planting by hand, one hole at a time.'], ['farm-11', 'p', 'Watering each new plant.'], ['farm-12', 'p', '', 'Carrying buckets of water from the top of the field.'], ['farm-13', 'w', 'Plants aren\'t the only ones that need water!', 'The finished rows at the end of the day.']] },
+    { d: '6', m: 'June 2017', t: 'Planting day', s: [['farm-09', 'w', 'Fresh rows running down the slope, staked and ready.'], ['farm-08', 'p', 'A row ready for planting.'], ['farm-10', 'p', 'By hand one at a time.', 'Planting by hand, one hole at a time.'], ['farm-11', 'p', 'Watering each new plant.'], ['farm-13', 'w', 'Plants aren\'t the only ones that need water!', 'The finished rows at the end of the day.']] },
   ];
 
   const root = $('#root'), veil = $('#gamVeil'), toastEl = $('#gamToast');
@@ -312,11 +312,9 @@
       ['life-01', 1.3333, 'A clear spring day over the water.'],
       ['life-03', 1.3333, 'A rainbow over the bay after a passing shower.'],
       ['life-05', 1.3333, 'Early morning sun over the meadow.'],
-      ['life-06', 1.3333, 'A snowy winter sunrise over the farm.'],
-      ['life-07', 1.3333, 'Sunset on the water between the islands.'],
-      ['life-08', 1.3333, 'The view from the top of Salt Spring.']] },
-    { n: '02', k: 'Terraces and stone walls', t: 'The vineyard', s: [
-      ['life-09', 1.3333, 'The vines in full leaf on a summer evening.', 'w'],
+      ['life-06', 1.3333, 'A snowy winter sunrise over the farm.']] },  // life-07 + life-08 moved to the Golden Age Story page (client, 8 Nov)
+    { n: '02', k: 'Terraces and stone walls', t: 'Fruit rows', s: [
+      ['life-09', 1.3333, 'Our plants in full leaf on a summer evening.', 'w'],
       ['life-10', 1.3333, 'Security on patrol.'],
       ['life-11', 1.3333, 'Everyone working hard.'],
       // client, 2 Nov: no captions on these for now (5th item is the alt text only)

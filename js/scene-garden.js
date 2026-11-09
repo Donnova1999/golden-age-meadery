@@ -8,7 +8,7 @@
           has its own flutter phases + a light branch sway and gusts that travel across the plants,
         • fountain water runs (flow-map animation on the water columns only) and the basin surface ripples,
         • the bottom-left flowers have no motion at all.
-   3. 2D canvas: a few big real rose petals (cut from the photo) tumbling all the way down past the bottom edge.
+   3. 2D canvas: real rose petals letting go of the rose bushes and tumbling down through the scene (client 9 Nov).
 */
 (function () {
   const GAM = (window.GAM = window.GAM || {});
@@ -213,65 +213,92 @@
         else { const sx = fa / ia; crop = [(1 - sx) / 2, 0, sx, 1]; }
       }
 
-      /* ---------- petals ---------- */
+      /* ---------- petals (client 9 Nov: "real looking petals falling", like his example) ----------
+         Real rose petals from Miki's picture, graded into the scene's pinks (md-petals-fall.webp: 3 petals in
+         rows rose / deep / blush / back side, then the same four rows in soft focus). Each petal lets go from the
+         rose bushes, tumbles over (showing its paler back), glides sideways when it tilts, drops faster when it is
+         edge-on and is carried by the same gusts that move the roses. Three depths: far (small, soft, slower),
+         middle (sharp) and near (bigger, soft, faster). */
+      const PCW = 176, PCH = 112, PSRC = [[112, 57], [108, 64], [146, 80]];
       const pctx = pc.getContext('2d');
-      let sheetM = null;
+      let sheetP = null;
       const petals = [];
-      loadImg(ctx.img('scene/md-real-petals.webp')).then((i) => { sheetM = i; }).catch(() => {});
+      loadImg(ctx.img('scene/md-petals-fall.webp')).then((i) => { sheetP = i; }).catch(() => {});
+      // where petals let go, as fractions of the frame [x0, x1, y0, y1, weight]: the rose bushes of each picture
+      const SOURCES = {
+        d: [[0.0, 0.17, 0.02, 0.4, 3], [0.6, 0.71, 0.0, 0.42, 3], [0.62, 0.98, 0.42, 0.62, 2], [0.05, 0.95, -0.06, -0.02, 2]],
+        m: [[0.0, 0.42, 0.0, 0.3, 5], [0.86, 1.0, 0.36, 0.5, 2], [0.1, 0.9, -0.05, -0.02, 2]],
+      };
+      // per depth: count, width (fraction of frame width), fall speed (frame heights per second), soft focus, opacity, wind
+      const LAYERS = {
+        d: [{ n: 6, size: [0.016, 0.022], v: [0.1, 0.14], blur: 1, alpha: 0.82, wind: 0.7 },
+            { n: 8, size: [0.025, 0.034], v: [0.14, 0.2], blur: 0, alpha: 0.98, wind: 1 },
+            { n: 3, size: [0.042, 0.054], v: [0.2, 0.27], blur: 1, alpha: 0.95, wind: 1.3 }],
+        m: [{ n: 3, size: [0.042, 0.052], v: [0.075, 0.1], blur: 1, alpha: 0.82, wind: 0.7 },
+            { n: 5, size: [0.062, 0.08], v: [0.1, 0.14], blur: 0, alpha: 0.98, wind: 1 },
+            { n: 2, size: [0.1, 0.12], v: [0.14, 0.19], blur: 1, alpha: 0.95, wind: 1.3 }],
+      };
+      function pickSource(key) {
+        const list = SOURCES[key]; let t = Math.random() * list.reduce((a, s) => a + s[4], 0);
+        for (const s of list) { t -= s[4]; if (t <= 0) return s; }
+        return list[0];
+      }
       function spawn(p, initial) {
-        const mob = comp === 'm';
-        p.near = Math.random() < 0.18;
-        // both layouts use the real petals from Miki's picture (client, 3 Nov); on computers sized to the wide scene's roses
-        p.size = (mob ? W * rnd(0.065, 0.09) : W * rnd(0.036, 0.05)) * (p.near ? (mob ? 1.2 : 1.3) : 1);
-        // a pause before each petal drifts in again, so only a few fall at a time
-        p.wait = initial ? 0 : (mob ? rnd(1.5, 5.5) : rnd(0.5, 2.5));
-        p.x0 = rnd(-0.05, 0.95) * W;
-        p.y = initial ? rnd(-0.3, 0.9) * H : -p.size * rnd(1.0, 2.6);
-        p.vy = (H / rnd(10, 14)) * (p.near ? 1.2 : 1); // px per second
-        p.swayA = rnd(0.018, 0.045) * W * (mob ? 1.5 : 1); // side-to-side swing of a falling petal
-        p.swayW = rnd(0.9, 1.5);
-        p.ph = rnd(0, 6.28);
-        p.drift = rnd(6, 18) * (W / 1440) * (mob ? 1.8 : 1);
-        p.rot0 = rnd(0, 6.28);
-        p.spin = rnd(-0.22, 0.22);
-        p.tiltA = rnd(0.3, 0.55); // gentle 3D rocking: width never drops below ~85%
-        p.tiltW = rnd(1.3, 2.2);
-        p.tph = rnd(0, 6.28);
+        const key = comp === 'm' ? 'm' : 'd', L = LAYERS[key][p.layer];
+        p.k = (Math.random() * 3) | 0;
+        p.tint = Math.random() < 0.45 ? 0 : Math.random() < 0.55 ? 1 : 2;
+        p.blur = L.blur; p.alpha = L.alpha; p.wind = L.wind;
+        p.size = W * rnd(L.size[0], L.size[1]);
+        p.v = rnd(L.v[0], L.v[1]);
+        const src = pickSource(key);
+        p.x = rnd(src[0], src[1]) * W;
+        p.y = initial ? rnd(-0.05, 0.85) * H : rnd(src[2], src[3]) * H;
+        if (p.y < 0) p.y -= p.size;
+        p.fade = initial || p.y < 0 ? 1 : 0;   // a petal letting go of a rose fades in
+        p.wait = initial ? rnd(0, 1.2) : rnd(0.2, comp === 'm' ? 2.2 : 1.6);
+        p.th = rnd(0, 6.283); p.om = rnd(1.6, 4.2) * (Math.random() < 0.5 ? -1 : 1); p.oph = rnd(0, 6.283);
+        p.th2 = rnd(0, 6.283); p.om2 = rnd(0.6, 1.6);
+        p.phi = rnd(0, 6.283); p.spin = rnd(-0.9, 0.9); p.spinJ = rnd(0.4, 1.2);
+        p.glide = rnd(0.6, 1.2) * (Math.random() < 0.5 ? -1 : 1);
+        p.swA = W * rnd(0.004, 0.012); p.sw = rnd(0.7, 1.4); p.ph = rnd(0, 6.283);
         p.age = 0;
-        p.spr = (Math.random() * PETALS_M.length) | 0;
       }
       function initPetals() {
         petals.length = 0;
         if (reduced) return;
-        const n = comp === 'm' ? 3 : 7;
-        for (let i = 0; i < n; i++) { const p = {}; spawn(p, true); petals.push(p); }
+        const key = comp === 'm' ? 'm' : 'd';
+        LAYERS[key].forEach((L, li) => { for (let i = 0; i < L.n; i++) { const p = { layer: li }; spawn(p, true); petals.push(p); } });
+        petals.sort((a, b) => a.layer - b.layer); // far ones first, near ones on top
       }
       function drawPetals(dt) {
         const dpr = pc.width / W;
         pctx.setTransform(1, 0, 0, 1, 0, 0);
         pctx.clearRect(0, 0, pc.width, pc.height);
-        const sh = sheetM, rects = PETALS_M;
-        if (!sh) return;
-        const wind = 0.6 + gust * 1.4;
+        if (!sheetP) return;
+        const windX = (6 + gust * 70) * (W / 1440);
         for (const p of petals) {
           if (p.wait > 0) { p.wait -= dt; continue; }
           p.age += dt;
-          const sw = p.swayW * p.age + p.ph;
-          // falls a touch slower at the ends of each swing, never stops
-          p.y += p.vy * dt * (0.9 + 0.14 * Math.cos(sw) * Math.cos(sw)) * (0.92 + gust * 0.2);
-          p.x0 += p.drift * wind * dt;
-          if (p.y - p.size > H) { spawn(p, false); continue; } // only after it has left the bottom edge
-          const x = p.x0 + Math.sin(sw) * p.swayA;
-          const rot = p.rot0 + p.spin * p.age + 0.32 * Math.cos(sw); // tilts into the direction of the swing
-          const sx = Math.cos(p.tiltA * Math.sin(p.tiltW * p.age + p.tph));
-          const sy = 0.9 + 0.1 * Math.cos(p.tiltW * 0.63 * p.age + p.tph);
-          const r = rects[p.spr % rects.length];
-          const w = p.size, h = (p.size * r[3]) / r[2];
+          p.th += p.om * dt * (0.8 + 0.4 * Math.sin(p.age * 0.9 + p.oph));
+          p.th2 += p.om2 * dt;
+          const fl = Math.cos(p.th), broad = Math.abs(fl);
+          const v = p.v * H;
+          // flat to the air it floats and glides, edge-on it drops
+          p.y += v * dt * (0.62 + 0.7 * (1 - broad)) * (0.9 + gust * 0.3);
+          p.x += (p.glide * Math.sin(2 * p.th) * v * 0.3 + windX * p.wind) * dt;
+          p.phi += (p.spin + p.spinJ * 0.6 * Math.cos(2 * p.th)) * dt;
+          if (p.fade < 1) p.fade = Math.min(1, p.fade + dt / 0.6);
+          if (p.y - p.size > H || p.x - p.size > W || p.x + p.size < 0) { spawn(p, false); continue; }
+          const x = p.x + Math.sin(p.age * p.sw + p.ph) * p.swA;
+          const sc = p.size / PSRC[p.k][0];
+          const fx = Math.max(0.1, broad) * (fl < 0 ? -1 : 1);
+          const fy = 0.72 + 0.28 * Math.cos(p.th2);
+          const row = (fl < 0 ? 3 : p.tint) + (p.blur ? 4 : 0);
           pctx.setTransform(dpr, 0, 0, dpr, x * dpr, p.y * dpr);
-          pctx.rotate(rot);
-          pctx.scale(sx, sy);
-          pctx.globalAlpha = 0.97;
-          pctx.drawImage(sh, r[0], r[1], r[2], r[3], -w / 2, -h / 2, w, h);
+          pctx.rotate(p.phi);
+          pctx.scale(fx * sc, fy * sc);
+          pctx.globalAlpha = p.alpha * p.fade;
+          pctx.drawImage(sheetP, p.k * PCW, row * PCH, PCW, PCH, -PCW / 2, -PCH / 2, PCW, PCH);
         }
         pctx.globalAlpha = 1;
       }
@@ -405,7 +432,7 @@
             GAM.loseGL(gl);
           }
           gl = null;
-          sheetM = null;
+          sheetP = null;
           petals.length = 0;
           still.removeAttribute('src');
           frame.style.background = '';
