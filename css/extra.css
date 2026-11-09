@@ -75,7 +75,7 @@ html, body { background: #161513; }
 
 /* ---------- page photographs (client, 21 Oct) ---------- */
 /* Home: snowy winter sunrise over the farm behind the hero (client, 2 Nov) */
-.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-sunrise.webp?v=202611081000) 50% 46%/cover no-repeat}
+.mead-home[data-route=home] .mead-hero-media{background:#0d0b09 url(../img/bg-sunrise.webp?v=202611092330) 50% 46%/cover no-repeat}
 .mead-home[data-route=home] .mead-scene-canvas,.mead-home[data-route=home] .mead-motion-toggle{display:none}
 .mead-home[data-route=home] .mead-hero-shade{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
@@ -94,11 +94,11 @@ html, body { background: #161513; }
 .mead-home[data-route=store]>main,.mead-home[data-route=contact]>main{position:relative;isolation:isolate}
 .mead-home[data-route=store]>main:before,.mead-home[data-route=contact]>main:before{content:"";position:absolute;inset:0;z-index:-2;background-repeat:no-repeat;background-size:cover}
 .mead-home[data-route=store]>main:after,.mead-home[data-route=contact]>main:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
-.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store-bay.webp?v=202611081000);background-position:50% 50%}  /* the bay in spring (client, 3 Nov) */
+.mead-home[data-route=store]>main:before{background-image:url(../img/bg-store-bay.webp?v=202611092330);background-position:50% 50%}  /* the bay in spring (client, 3 Nov) */
 .mead-home[data-route=store]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.70) 0%,rgba(10,8,6,.35) 45%,rgba(10,8,6,.05) 75%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.10) 12%,rgba(10,8,6,.12) 55%,rgba(10,8,6,.55) 85%,var(--background) 100%)}
-.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202611081000);background-position:50% 40%}
+.mead-home[data-route=contact]>main:before{background-image:url(../img/bg-contact.webp?v=202611092330);background-position:50% 40%}
 .mead-home[data-route=contact]>main:after{background:
   linear-gradient(90deg,rgba(10,8,6,.62) 0%,rgba(10,8,6,.30) 45%,rgba(10,8,6,0) 70%),
   linear-gradient(180deg,var(--background) 0%,rgba(10,8,6,.05) 12%,rgba(10,8,6,.05) 75%,var(--background) 100%)}
@@ -123,7 +123,7 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
 .gam-age { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 16px; background: #0e0c0a; overflow: auto;
   transition: opacity .45s ease, visibility .45s; }
 .gam-age.out { opacity: 0; visibility: hidden; }
-.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-sunrise.webp?v=202611081000) 62% 48% / cover no-repeat;
+.gam-age::before { content: ""; position: fixed; inset: -40px; pointer-events: none; background: url(../img/bg-sunrise.webp?v=202611092330) 62% 48% / cover no-repeat;
   filter: blur(3px) brightness(.72) saturate(1.05); transform: scale(1.02); }
 .gam-age::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(14,12,10,.30), rgba(14,12,10,.86) 78%); }
 .gam-age-card { position: relative; z-index: 1; width: min(460px, 100%); text-align: center; padding: 40px 34px 28px; color: #f3ead6;
@@ -251,3 +251,20 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
 [data-skin=library] .mead-pdp-info button.bg-primary:hover { background: #2477cf; }
 /* About page: space between the paragraphs of a section (Our mission has four) */
 .mead-prose p + p { margin-top: 1em; }
+
+/* ---------- client corrections, 8-9 Nov ---------- */
+/* Contact: the sharp sunset photo replaces the blurry rainbow (whole photo across the top, fading into the page) */
+.mead-home[data-route=contact]>main:before { background-image: url(../img/bg-contact-sunset.webp?v=202611092330); background-size: 100% auto; background-position: 50% 0; }
+.mead-home[data-route=contact] .mead-page-hero { min-height: 46vw; }
+.mead-home[data-route=contact]>main:after { background:
+  linear-gradient(90deg, rgba(10,8,6,.55) 0%, rgba(10,8,6,.2) 36%, rgba(10,8,6,0) 55%),
+  linear-gradient(180deg, var(--background) 0, rgba(10,8,6,.05) 5vw, rgba(10,8,6,0) 30vw, rgba(10,8,6,.35) 58vw, var(--background) 76vw); }
+@media (max-width: 760px) {
+  .mead-home[data-route=contact]>main:before { background-size: 160% auto; background-position: 50% 0; }
+  .mead-home[data-route=contact] .mead-page-hero { min-height: 104vw; }
+  .mead-home[data-route=contact]>main:after { background:
+    linear-gradient(180deg, rgba(10,8,6,.5) 0, rgba(10,8,6,.25) 40vw, rgba(10,8,6,0) 70vw, rgba(10,8,6,.45) 100vw, var(--background) 122vw); }
+}
+/* About: the mountain view right under the Our mission text */
+.gam-mission-photo { margin-top: 0; margin-bottom: 72px; }
+@media (max-width: 760px) { .gam-mission-photo { margin-bottom: 40px; } }
