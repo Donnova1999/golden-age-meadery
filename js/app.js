@@ -252,6 +252,19 @@
       show(0);
     }
 
+    // product photo beside ADD TO CART (client 11 Nov: "most times this image doesn't load"):
+    // load it straight away, not lazily behind the scene, and retry a few times if a download fails
+    const pdpImg = $('.mead-pdp-image img', root);
+    if (pdpImg) {
+      const base = pdpImg.getAttribute('src').split('?')[0];
+      let tries = 0;
+      const retry = () => { if (tries >= 4 || !pdpImg.isConnected) return; tries++; setTimeout(() => { if (pdpImg.isConnected) pdpImg.src = base + '?r=' + Date.now(); }, 700 * tries); };
+      pdpImg.loading = 'eager';
+      pdpImg.addEventListener('error', retry);
+      pdpImg.addEventListener('load', () => { if (!pdpImg.naturalWidth) retry(); });
+      if (pdpImg.complete && !pdpImg.naturalWidth) retry();
+    }
+
     // product details: quantity + add to cart
     const qtyWrap = $('.mead-qty', root);
     if (qtyWrap) {
