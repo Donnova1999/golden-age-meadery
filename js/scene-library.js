@@ -14,10 +14,10 @@
       img: 'scene/al-bg-3b.webp', nf: 'scene/al-nf-3b.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
       front: { src: 'scene/al-front.webp', box: [1050, 499, 251, 115] },
       bottles: [
-        // the photographer's three bottles, 21 Nov: 200 ml, 750 ml, Reserve 750 ml
-        { src: 'scene/al-b200.webp', cx: 827.9, base: 588, h: 346.0, ar: 0.16108, lit: 0.8 },
-        { src: 'scene/al-b750.webp', cx: 911.0, base: 588, h: 400, ar: 0.23136, lit: 0.9 },
-        { src: 'scene/al-bres.webp', cx: 1015.1, base: 588, h: 400.0, ar: 0.24422, lit: 1.0 },
+        // client 21 Nov: 200 ml left, Reserve in the middle (taller, a bit forward; drawn last), 750 ml right
+        { src: 'scene/al-b200.webp', cx: 827.2, base: 588.0, h: 337.4, ar: 0.16108, lit: 0.8 },
+        { src: 'scene/al-b750.webp', cx: 1020.9, base: 588.0, h: 390.0, ar: 0.23136, lit: 0.9 },
+        { src: 'scene/al-bres.webp', cx: 915.1, base: 598.0, h: 431.9, ar: 0.24422, lit: 1.0 },
       ],
       fire: { x: 286, y: 482, rx: 84, ry: 64 },
       // real fireplace flames (video) mapped under the cauldron, same size as the photo's fire
@@ -36,13 +36,13 @@
     // phone (client 22 Oct): Miki's realistic library picture; real bottles stand where the AI ones were,
     // the closed book became the open one (pages turn), the cauldron fire is real video, candles sway
     mob: {
-      img: 'scene/al-real-m-3b.webp', nf: 'scene/al-real-nf-m-3b.webp', mask: 'scene/al-real-mask-m.png', w: 945, h: 1304,
+      img: 'scene/al-real-m-3b.webp', nf: 'scene/al-real-nf-m-3b.webp', mask: 'scene/al-real-mask-m-3b.png', w: 945, h: 1304,
       front: null,
       bottles: [
-        // the photographer's three bottles, 21 Nov (the old bottles were painted out of the plate)
-        { src: 'scene/al-b200.webp', cx: 163.3, base: 977.7, h: 489.8, ar: 0.16108, lit: 0.7 },
-        { src: 'scene/al-b750.webp', cx: 277.1, base: 977.7, h: 566.3, ar: 0.23136, lit: 0.75 },
-        { src: 'scene/al-bres.webp', cx: 420.6, base: 977.7, h: 566.3, ar: 0.24422, lit: 0.8 },
+        // client 21 Nov: bottles centred — 200 ml left, Reserve in the middle (taller, a bit forward; drawn last), 750 ml right
+        { src: 'scene/al-b200.webp', cx: 337.1, base: 977.7, h: 436.3, ar: 0.16108, lit: 0.7 },
+        { src: 'scene/al-b750.webp', cx: 584.7, base: 977.7, h: 504.4, ar: 0.23136, lit: 0.75 },
+        { src: 'scene/al-bres.webp', cx: 449.3, base: 992.8, h: 558.5, ar: 0.24422, lit: 0.8 },
       ],
       bottleLight: 'linear-gradient(100deg,rgba(255,236,200,.22) 0%,rgba(255,220,170,.06) 35%,rgba(0,0,0,0) 60%,rgba(255,170,90,.2) 100%)',
       fire: { x: 880, y: 690, rx: 90, ry: 62 },
@@ -54,7 +54,8 @@
         { x: 34.5, tip: 317, base: 353, w: 5 },
         { x: 655.5, tip: 467, base: 490, w: 4 },
       ],
-      book: { right: [[424.8, 700.0], [540.2, 714.5], [495.6, 760.3], [361.0, 756.3]], left: [[424.8, 700.0], [287.3, 709.9], [245.0, 745.2], [361.0, 756.3]], lift: 0.8 },
+      // the open book now lies left of the bottles (client 21 Nov: the page turns were hidden behind them)
+      book: { right: [[197.5,729.1],[303.1,742.4],[262.3,784.3],[139.1,780.6]], left: [[197.5,729.1],[71.7,738.1],[32.9,770.5],[139.1,780.6]], lift: 0.8 },
     },
   };
 
