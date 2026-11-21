@@ -234,6 +234,8 @@
       const thumbs = $$('button', thumbsWrap);
       const list = thumbs.map((b, i) => ({ src: $('img', b).getAttribute('src'), alt: b.dataset.alt || (i === 0 ? main.alt : '') }));
       thumbs.forEach((b, i) => b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/\d+$/, String(i + 1))));
+      // a single photo needs no arrows, counter or thumbnails (Ancient Lore, client 21 Nov)
+      if (list.length < 2) { thumbsWrap.style.display = 'none'; const nav = $('.mead-photo-navigation', root); if (nav) nav.style.display = 'none'; }
       // never leave the big photo empty: retry a failed or stalled download (with a fresh URL)
       let tries = 0, stall = 0;
       const retryMain = () => {
