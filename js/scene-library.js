@@ -14,10 +14,10 @@
       img: 'scene/al-bg-3b.webp', nf: 'scene/al-nf-3b.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
       front: { src: 'scene/al-front.webp', box: [1050, 499, 251, 115] },
       bottles: [
-        // client 21 Nov: 200 ml left, Reserve in the middle (taller, a bit forward; drawn last), 750 ml right
-        { src: 'scene/al-b200.webp', cx: 827.2, base: 588.0, h: 337.4, ar: 0.16108, lit: 0.8 },
-        { src: 'scene/al-b750.webp', cx: 1020.9, base: 588.0, h: 390.0, ar: 0.23136, lit: 0.9 },
-        { src: 'scene/al-bres.webp', cx: 915.1, base: 598.0, h: 431.9, ar: 0.24422, lit: 1.0 },
+        // client 21 Nov: 200 ml | Reserve (glass top) in the middle, slightly bigger and a bit forward (drawn last) | regular 750 ml (gold cap)
+        { src: 'scene/al-b200.webp', cx: 827.9, base: 588.0, h: 346.0, ar: 0.16108, lit: 0.8 },
+        { src: 'scene/al-b750.webp', cx: 1018.2, base: 588.0, h: 380.0, ar: 0.24422, lit: 0.9 },
+        { src: 'scene/al-bres.webp', cx: 913.8, base: 598.0, h: 424.0, ar: 0.23136, lit: 1.0 },
       ],
       fire: { x: 286, y: 482, rx: 84, ry: 64 },
       // real fireplace flames (video) mapped under the cauldron, same size as the photo's fire
@@ -39,10 +39,10 @@
       img: 'scene/al-real-m-3b.webp', nf: 'scene/al-real-nf-m-3b.webp', mask: 'scene/al-real-mask-m-3b.png', w: 945, h: 1304,
       front: null,
       bottles: [
-        // client 21 Nov: bottles centred — 200 ml left, Reserve in the middle (taller, a bit forward; drawn last), 750 ml right
-        { src: 'scene/al-b200.webp', cx: 337.1, base: 977.7, h: 436.3, ar: 0.16108, lit: 0.7 },
-        { src: 'scene/al-b750.webp', cx: 584.7, base: 977.7, h: 504.4, ar: 0.23136, lit: 0.75 },
-        { src: 'scene/al-bres.webp', cx: 449.3, base: 992.8, h: 558.5, ar: 0.24422, lit: 0.8 },
+        // client 21 Nov: bottles centred — 200 ml | Reserve (glass top, middle, bigger, forward; drawn last) | regular 750 ml (gold cap)
+        { src: 'scene/al-b200.webp', cx: 338.0, base: 977.7, h: 436.3, ar: 0.16108, lit: 0.7 },
+        { src: 'scene/al-b750.webp', cx: 573.0, base: 977.7, h: 479.1, ar: 0.24422, lit: 0.75 },
+        { src: 'scene/al-bres.webp', cx: 443.8, base: 990.3, h: 534.6, ar: 0.23136, lit: 0.8 },
       ],
       bottleLight: 'linear-gradient(100deg,rgba(255,236,200,.22) 0%,rgba(255,220,170,.06) 35%,rgba(0,0,0,0) 60%,rgba(255,170,90,.2) 100%)',
       fire: { x: 880, y: 690, rx: 90, ry: 62 },

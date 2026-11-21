@@ -14,7 +14,7 @@
       bg: 'scene/hf-bg-desk.webp', fg: 'scene/hf-fg-desk-3b.webp', bottles: 'scene/hf-bottles-3b.webp',
       front: 'scene/hf-front-desk.webp', mask: 'scene/hf-firemask-desk.png', video: 'hf-loop.webm',
       vid: { x: -308, y: -20, w: 960 * 1.44, h: 540 * 1.44 },
-      bottlesBox: [465.0, 135.0, 311.2, 515.0], frontBox: [492, 612, 278, 90],
+      bottlesBox: [460.0, 143.2, 314.2, 508.8], frontBox: [492, 612, 278, 90],
       candles: [{ x: 41, y: 118, wick: 130, r: 12 }, { x: 1251, y: 84, wick: 104, r: 10 }],
       fire: { x: 345, y: 205, rx: 230, ry: 190 }, spark: { x: 345, y: 300, spread: 120, rise: 300 },
       wrap: 'linear-gradient(100deg, rgba(255,150,70,.62) 0%, rgba(255,128,48,.22) 32%, rgba(255,110,40,0) 58%)',

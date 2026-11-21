@@ -24,9 +24,9 @@
   // plus a Reserve 750 ml at C$49 while quantities last (client, 18 Nov; sold on the store page)
   const SIZES = { 750: { label: '750 ml', price: 39 }, 200: { label: '200 ml', price: 19 }, reserve: { label: 'Reserve 750 ml', price: 49 } };
   const PRODUCTS = {
-    'hearth-and-fire': { name: 'Hearth and Fire', img: { 750: 'img/bottles/hf-750.webp', 200: 'img/bottles/hf-200.webp', reserve: 'img/bottles/hf-res.webp' } },
-    'midnight-dream': { name: 'Midnight Dream', img: { 750: 'img/bottles/md-750.webp', 200: 'img/bottles/md-200.webp', reserve: 'img/bottles/md-res.webp' } },
-    'ancient-lore': { name: 'Ancient Lore', img: { 750: 'img/bottles/al-750.webp', 200: 'img/bottles/al-200.webp', reserve: 'img/bottles/al-res.webp' } },
+    'hearth-and-fire': { name: 'Hearth and Fire', img: { 750: 'img/bottles/hf-regular.webp', 200: 'img/bottles/hf-200.webp', reserve: 'img/bottles/hf-reserve.webp' } },
+    'midnight-dream': { name: 'Midnight Dream', img: { 750: 'img/bottles/md-regular.webp', 200: 'img/bottles/md-200.webp', reserve: 'img/bottles/md-reserve.webp' } },
+    'ancient-lore': { name: 'Ancient Lore', img: { 750: 'img/bottles/al-regular.webp', 200: 'img/bottles/al-200.webp', reserve: 'img/bottles/al-reserve.webp' } },
   };
   // cart keys look like "hearth-and-fire|750"
   const skuOf = (key) => { const [slug, size] = String(key).split('|'); return PRODUCTS[slug] && SIZES[size] ? { slug, size, p: PRODUCTS[slug], s: SIZES[size] } : null; };
