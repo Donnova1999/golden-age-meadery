@@ -11,10 +11,10 @@
   const SETS = {
     desk: {
       w: 1376, h: 768,
-      bg: 'scene/hf-bg-desk.webp', fg: 'scene/hf-fg-desk.webp', bottles: 'scene/hf-bottles-desk.webp',
+      bg: 'scene/hf-bg-desk.webp', fg: 'scene/hf-fg-desk-3b.webp', bottles: 'scene/hf-bottles-3b.webp',
       front: 'scene/hf-front-desk.webp', mask: 'scene/hf-firemask-desk.png', video: 'hf-loop.webm',
       vid: { x: -308, y: -20, w: 960 * 1.44, h: 540 * 1.44 },
-      bottlesBox: [465, 147, 311, 496], frontBox: [492, 612, 278, 90],
+      bottlesBox: [460, 128.5, 320.0, 511.5], frontBox: [492, 612, 278, 90],
       candles: [{ x: 41, y: 118, wick: 130, r: 12 }, { x: 1251, y: 84, wick: 104, r: 10 }],
       fire: { x: 345, y: 205, rx: 230, ry: 190 }, spark: { x: 345, y: 300, spread: 120, rise: 300 },
       wrap: 'linear-gradient(100deg, rgba(255,150,70,.62) 0%, rgba(255,128,48,.22) 32%, rgba(255,110,40,0) 58%)',
@@ -23,7 +23,7 @@
     // everything static is baked into one plate, only the fire (real video) and the lantern candle move
     mob: {
       w: 945, h: 1304, real: true,
-      bg: 'scene/hf-real-m.webp', mask: 'scene/hf-real-firemask-m.png', video: 'hf-loop.webm',
+      bg: 'scene/hf-real-m-3b.webp', mask: 'scene/hf-real-firemask-m-3b.png', video: 'hf-loop.webm',
       vid: { x: 174.9, y: 302.3, w: 960 * 1.3455, h: 540 * 1.3455 }, vidBlend: 'screen', vidFilter: 'brightness(.95) contrast(1.6)',
       // fireplace moved right (client 24 Oct) so the flames clear the big bottle
       candles: [{ x: 71.4, y: 447.3, wick: 469.6, r: 7 }],

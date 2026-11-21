@@ -11,11 +11,13 @@
   /* ---------------- composition data (image pixel coordinates) ---------------- */
   const LAYOUT = {
     desk: {
-      img: 'scene/al-bg.webp', nf: 'scene/al-nf.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
+      img: 'scene/al-bg-3b.webp', nf: 'scene/al-nf-3b.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
       front: { src: 'scene/al-front.webp', box: [1050, 499, 251, 115] },
       bottles: [
-        { src: 'scene/al-200.webp', cx: 846, base: 590, h: 345.9, ar: 233 / 1526, lit: 0.9 },
-        { src: 'scene/al-750.webp', cx: 925, base: 575, h: 400, ar: 319 / 1500, lit: 1 },
+        // the photographer's three bottles, 21 Nov: 200 ml, 750 ml, Reserve 750 ml
+        { src: 'scene/al-b200.webp', cx: 827.9, base: 588, h: 346.0, ar: 0.16108, lit: 0.8 },
+        { src: 'scene/al-b750.webp', cx: 911.0, base: 588, h: 400, ar: 0.23136, lit: 0.9 },
+        { src: 'scene/al-bres.webp', cx: 1015.1, base: 588, h: 400.0, ar: 0.24422, lit: 1.0 },
       ],
       fire: { x: 286, y: 482, rx: 84, ry: 64 },
       // real fireplace flames (video) mapped under the cauldron, same size as the photo's fire
@@ -34,11 +36,13 @@
     // phone (client 22 Oct): Miki's realistic library picture; real bottles stand where the AI ones were,
     // the closed book became the open one (pages turn), the cauldron fire is real video, candles sway
     mob: {
-      img: 'scene/al-real-m.webp', nf: 'scene/al-real-nf-m.webp', mask: 'scene/al-real-mask-m.png', w: 945, h: 1304,
+      img: 'scene/al-real-m-3b.webp', nf: 'scene/al-real-nf-m-3b.webp', mask: 'scene/al-real-mask-m.png', w: 945, h: 1304,
       front: null,
       bottles: [
-        { src: 'scene/al-real-750.webp', cx: 196.0, base: 943.0, h: 640.0, ar: 0.21327, lit: 0.8 },
-        { src: 'scene/al-real-200.webp', cx: 321.0, base: 940.0, h: 595.2, ar: 0.15390, lit: 0.7 },
+        // the photographer's three bottles, 21 Nov (the old bottles were painted out of the plate)
+        { src: 'scene/al-b200.webp', cx: 163.3, base: 977.7, h: 489.8, ar: 0.16108, lit: 0.7 },
+        { src: 'scene/al-b750.webp', cx: 277.1, base: 977.7, h: 566.3, ar: 0.23136, lit: 0.75 },
+        { src: 'scene/al-bres.webp', cx: 420.6, base: 977.7, h: 566.3, ar: 0.24422, lit: 0.8 },
       ],
       bottleLight: 'linear-gradient(100deg,rgba(255,236,200,.22) 0%,rgba(255,220,170,.06) 35%,rgba(0,0,0,0) 60%,rgba(255,170,90,.2) 100%)',
       fire: { x: 880, y: 690, rx: 90, ry: 62 },

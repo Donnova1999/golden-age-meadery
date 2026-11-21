@@ -20,12 +20,13 @@
     volx: SVG('<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><line x1="22" x2="16" y1="9" y2="15"></line><line x1="16" x2="22" y1="9" y2="15"></line>'),
   };
 
-  // each mead comes in two sizes (client, 21 Oct): 750 ml C$39, 200 ml C$19
-  const SIZES = { 750: { label: '750 ml', price: 39 }, 200: { label: '200 ml', price: 19 } };
+  // each mead comes in two sizes (client, 21 Oct): 750 ml C$39, 200 ml C$19,
+  // plus a Reserve 750 ml at C$49 while quantities last (client, 18 Nov; sold on the store page)
+  const SIZES = { 750: { label: '750 ml', price: 39 }, 200: { label: '200 ml', price: 19 }, reserve: { label: 'Reserve 750 ml', price: 49 } };
   const PRODUCTS = {
-    'hearth-and-fire': { name: 'Hearth and Fire', img: { 750: 'img/bottle-hf750.webp', 200: 'img/bottle-hf200.webp' } },
-    'midnight-dream': { name: 'Midnight Dream', img: { 750: 'img/bottle-md750.webp', 200: 'img/bottle-md200.webp' } },
-    'ancient-lore': { name: 'Ancient Lore', img: { 750: 'img/bottle-al750.webp', 200: 'img/bottle-al200.webp' } },
+    'hearth-and-fire': { name: 'Hearth and Fire', img: { 750: 'img/bottles/hf-750.webp', 200: 'img/bottles/hf-200.webp', reserve: 'img/bottles/hf-res.webp' } },
+    'midnight-dream': { name: 'Midnight Dream', img: { 750: 'img/bottles/md-750.webp', 200: 'img/bottles/md-200.webp', reserve: 'img/bottles/md-res.webp' } },
+    'ancient-lore': { name: 'Ancient Lore', img: { 750: 'img/bottles/al-750.webp', 200: 'img/bottles/al-200.webp', reserve: 'img/bottles/al-res.webp' } },
   };
   // cart keys look like "hearth-and-fire|750"
   const skuOf = (key) => { const [slug, size] = String(key).split('|'); return PRODUCTS[slug] && SIZES[size] ? { slug, size, p: PRODUCTS[slug], s: SIZES[size] } : null; };
@@ -225,22 +226,31 @@
     cleanups.push(unsub);
     syncPause();
 
-    // gallery: main photo, counter, thumbnails (+ Miki's new Midnight Dream photo)
+    // gallery: main photo, counter, thumbnails. Miki's garden photo is now the first photo in the
+    // Midnight Dream markup itself (client 15 Nov: "sometimes this first photo doesn't load"), so the
+    // browser fetches it as soon as the page opens instead of after the script swaps it in
     const thumbsWrap = $('.mead-photo-thumbnails', root), main = $('.mead-photo-original', root), counter = $('.mead-photo-navigation span', root);
     if (thumbsWrap && main) {
-      if (route === 'midnight-dream') {
-        const b = thumbsWrap.firstElementChild.cloneNode(true);
-        $('img', b).src = 'img/client-md-garden.webp';
-        thumbsWrap.insertBefore(b, thumbsWrap.firstElementChild);
-      }
       const thumbs = $$('button', thumbsWrap);
-      const list = thumbs.map((b, i) => ({ src: $('img', b).getAttribute('src'), alt: i === 0 && route === 'midnight-dream' ? 'Midnight Dream bottles on wooden stands outdoors, green trees behind' : (b.dataset.alt || main.alt) }));
-      if (route !== 'midnight-dream') list[0].alt = main.alt;
+      const list = thumbs.map((b, i) => ({ src: $('img', b).getAttribute('src'), alt: b.dataset.alt || (i === 0 ? main.alt : '') }));
       thumbs.forEach((b, i) => b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/\d+$/, String(i + 1))));
+      // never leave the big photo empty: retry a failed or stalled download (with a fresh URL)
+      let tries = 0, stall = 0;
+      const retryMain = () => {
+        if (tries >= 4 || !main.isConnected) return;
+        tries++;
+        const base = main.getAttribute('src').split('?')[0];
+        setTimeout(() => { if (main.isConnected && main.getAttribute('src').split('?')[0] === base) main.src = base + '?r=' + Date.now(); }, 600 * tries);
+      };
+      main.loading = 'eager';
+      main.addEventListener('error', retryMain);
+      main.addEventListener('load', () => { clearTimeout(stall); if (!main.naturalWidth) retryMain(); });
+      const watch = () => { clearTimeout(stall); stall = setTimeout(() => { if (main.isConnected && !(main.complete && main.naturalWidth)) retryMain(); }, 5000); };
       let gi = 0;
       const show = (i) => {
         gi = (i + list.length) % list.length;
-        main.src = list[gi].src;
+        if (main.getAttribute('src').split('?')[0] !== list[gi].src) { tries = 0; main.src = list[gi].src; }
+        if (main.complete && !main.naturalWidth) retryMain(); else if (!main.complete) watch();
         if (list[gi].alt) main.alt = list[gi].alt;
         if (counter) counter.textContent = `${gi + 1} / ${list.length}`;
         thumbs.forEach((b, k) => b.setAttribute('aria-pressed', String(k === gi)));

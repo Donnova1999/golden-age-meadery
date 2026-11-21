@@ -3,6 +3,8 @@
 
    Layers inside the .mead-setting frame:
    1. <img> the baked photo (bottles composited in Python with shadows + glass-top reflection) — also the still/fallback.
+      Since 21 Nov the plates carry the photographer's three bottles (200 ml, 750 ml, Reserve 750 ml) from the client's
+      "Room Environments" set; the old bottles were painted out first. The motion masks are cleared under the bottles.
    2. WebGL canvas: the same photo with motion applied to its real pixels —
         • top-right vines, leaves and flowers move in the wind leaf by leaf: every leaf / flower (pre-segmented)
           has its own flutter phases + a light branch sway and gusts that travel across the plants,
@@ -15,9 +17,9 @@
   GAM.photoScenes = GAM.photoScenes || {};
 
   const COMP = {
-    d: { base: 'scene/md-base.webp', mask: 'scene/md-mask.png', la: 'scene/md-leaf-a.png', lb: 'scene/md-leaf-b.png', w: 1376, h: 768, sway: 1.5, leaf: 3.1 },
+    d: { base: 'scene/md-base-3b.webp', mask: 'scene/md-mask-3b.png', la: 'scene/md-leaf-a.png', lb: 'scene/md-leaf-b.png', w: 1376, h: 768, sway: 1.5, leaf: 3.1 },
     // tall (phone, and desktop beside the story): Miki's realistic garden picture with the real bottles (client 23 Oct)
-    m: { base: 'scene/md-real-m.webp', mask: 'scene/md-real-mask-m.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4,
+    m: { base: 'scene/md-real-m-3b.webp', mask: 'scene/md-real-mask-m-3b.png', la: 'scene/md-real-leaf-a-m.png', lb: 'scene/md-real-leaf-b-m.png', w: 1068, h: 1472, sway: 1.6, leaf: 4.4,
          water: 1, dry: 'scene/md-real-dry-m.webp', dryBox: [830, 248, 232, 374] },
   };
   // the real rose petals lying on the table in Miki's picture, cut out (x, y, w, h in md-real-petals.webp); phone 24 Oct, computers 3 Nov
