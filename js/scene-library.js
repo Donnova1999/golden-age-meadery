@@ -12,8 +12,8 @@
   const LAYOUT = {
     desk: {
       img: 'scene/al-bg-3b.webp', nf: 'scene/al-nf-3b.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
-      // real coffee beans + pine sprig from the client's banner photo (21 Nov), drawn at 2x
-      front: { src: 'scene/al-front-2.webp', box: [1058, 478, 266, 150] },
+      // client 23 Nov: coffee beans heaped in a gold bowl with pine branches around it (rendered layer, ~1.9x)
+      front: { src: 'scene/al-front-3.svg', box: [1034.1, 503.6, 269.9, 138.1] },
       bottles: [
         // client 21 Nov: 200 ml | Reserve (glass top) in the middle, slightly bigger and a bit forward (drawn last) | regular 750 ml (gold cap)
         { src: 'scene/al-b200.webp', cx: 827.9, base: 588.0, h: 346.0, ar: 0.16108, lit: 0.8 },
