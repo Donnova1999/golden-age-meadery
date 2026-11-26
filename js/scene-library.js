@@ -1,7 +1,8 @@
 /* Golden Age Meadery — Ancient Lore (realistic photo scene).
    The photograph itself is animated in WebGL: candle flames sway and flicker, the fire under the
    cauldron licks slowly, steam drifts, and every ~10–14 s a real page of the book curls over
-   (a bent mesh textured with the book's own pages). The client bottles stand on an enlarged stone top.
+   (a bent mesh textured with the book's own pages) when the layout has a book. Since 26 Nov the scene is
+   Miki's coffee picture: candles, the fireplace fire and the cauldron steam move; no book, bottles are in the photo.
    GAM.photoScenes.library = { mount(frame, ctx) -> { destroy(), setPaused(bool) } } */
 (function () {
   'use strict';
@@ -10,53 +11,42 @@
 
   /* ---------------- composition data (image pixel coordinates) ---------------- */
   const LAYOUT = {
+    // client 26 Nov: Miki's new Ancient Lore picture (coffee beans, the three bottles, honeycomb, cauldron and fire).
+    // The bottles are in the photo itself. Candle flames sway and flicker over a flameless copy of the photo,
+    // the fireplace under the cauldron burns with the real fire video, steam drifts off the cauldron.
+    // Desktop (client 26 Nov): edge to edge, full width like the previous scene; the photo's band from the
+    // candle flame down to the bottle bases (y 236-1012 of the 1199x1312 picture). Phones: the whole picture.
     desk: {
-      img: 'scene/al-bg-3b.webp', nf: 'scene/al-nf-3b.webp', mask: 'scene/al-mask.png', w: 1376, h: 768,
-      // client 24 Nov: a realistic gold bowl of coffee beans only (no loose beans, no branches)
-      front: { src: 'scene/al-bowl-4.webp', box: [1098, 508.4, 174, 133.6] },
-      bottles: [
-        // client 21 Nov: 200 ml | Reserve (glass top) in the middle, slightly bigger and a bit forward (drawn last) | regular 750 ml (gold cap)
-        { src: 'scene/al-b200.webp', cx: 827.9, base: 588.0, h: 346.0, ar: 0.16108, lit: 0.8 },
-        { src: 'scene/al-b750.webp', cx: 1018.2, base: 588.0, h: 380.0, ar: 0.24422, lit: 0.9 },
-        { src: 'scene/al-bres.webp', cx: 913.8, base: 598.0, h: 424.0, ar: 0.23136, lit: 1.0 },
-      ],
-      fire: { x: 286, y: 482, rx: 84, ry: 64 },
-      // real fireplace flames (video) mapped under the cauldron, same size as the photo's fire
-      fireVid: { src: 'hf-loop.webm', x: 226 - 380 * 0.62, y: 515 - 235 * 0.44, w: 960 * 0.62, h: 540 * 0.44 },
-      wisps: { x0: 215, x1: 395, y: 248, w: 16, rate: 3.2, rise: 22 },
-      steam: [{ x: 282, y: 172, rx: 88, ry: 84 }],
-      glows: [{ x: 290, y: 468, r: 290, k: 0.08 }, { x: 302, y: 628, r: 125, k: 0.16 }, { x: 1131, y: 60, r: 170, k: 0.07 }],
-      candles: [
-        { x: 1131, tip: 32, base: 73, w: 7 },
-        { x: 140.5, tip: 114, base: 137, w: 8 },
-        { x: 479, tip: 40, base: 60, w: 7 },
-      ],
-      // [spine-top, outer-top, outer-bottom, spine-bottom]
-      book: { right: [[707, 350], [906, 375], [829, 454], [597, 447]], left: [[707, 350], [470, 367], [397, 428], [597, 447]], lift: 0.86 },
-    },
-    // phone (client 22 Oct): Miki's realistic library picture; real bottles stand where the AI ones were,
-    // the closed book became the open one (pages turn), the cauldron fire is real video, candles sway
-    mob: {
-      img: 'scene/al-real-m-3b.webp', nf: 'scene/al-real-nf-m-3b.webp', mask: 'scene/al-real-mask-m-3b.png', w: 945, h: 1304,
+      img: 'scene/al-coffee-d.webp', nf: 'scene/al-coffee-nf-d.webp', mask: 'scene/al-coffee-mask-d.png', w: 1376, h: 891,
       front: null,
-      bottles: [
-        // client 21 Nov: bottles centred — 200 ml | Reserve (glass top, middle, bigger, forward; drawn last) | regular 750 ml (gold cap)
-        { src: 'scene/al-b200.webp', cx: 338.0, base: 977.7, h: 436.3, ar: 0.16108, lit: 0.7 },
-        { src: 'scene/al-b750.webp', cx: 573.0, base: 977.7, h: 479.1, ar: 0.24422, lit: 0.75 },
-        { src: 'scene/al-bres.webp', cx: 443.8, base: 990.3, h: 534.6, ar: 0.23136, lit: 0.8 },
-      ],
-      bottleLight: 'linear-gradient(100deg,rgba(255,236,200,.22) 0%,rgba(255,220,170,.06) 35%,rgba(0,0,0,0) 60%,rgba(255,170,90,.2) 100%)',
-      fire: { x: 880, y: 690, rx: 90, ry: 62 },
-      fireVid: { src: 'hf-loop.webm', x: 820 - 380 * 0.7, y: 735 - 225 * 0.7, w: 960 * 0.7, h: 540 * 0.7 },
-      wisps: { x0: 800, x1: 925, y: 428, w: 14, rate: 3, rise: 26 },
-      steam: [{ x: 865, y: 360, rx: 70, ry: 80 }],
-      glows: [{ x: 880, y: 690, r: 220, k: 0.07 }, { x: 880, y: 745, r: 110, k: 0.1 }, { x: 35, y: 335, r: 110, k: 0.06 }],
+      bottles: [],
+      book: null,
+      fire: { x: 1279.6, y: 480.9, rx: 132.0, ry: 97.5 },
+      // real fireplace flames (video) blended into the fire under the cauldron
+      fireVid: { src: 'hf-loop.webm', x: 799.3, y: 327.6, w: 991.5, h: 557.7 },
+      wisps: { x0: 1147.6, x1: 1331.2, y: 125.1, w: 17.2, rate: 3, rise: 27.5 },
+      steam: [{ x: 1239.4, y: 67.7, rx: 97.5, ry: 80.3 }],
+      glows: [{ x: 1279.6, y: 475.1, r: 264.0, k: 0.07 }, { x: 1296.8, y: 532.5, r: 137.7, k: 0.1 }, { x: 60.8, y: 36.7, r: 137.7, k: 0.07 }],
       candles: [
-        { x: 34.5, tip: 317, base: 353, w: 5 },
-        { x: 655.5, tip: 467, base: 490, w: 4 },
+        { x: 60.8, tip: 5.7, base: 64.3, w: 9.2 },
+        { x: 908.9, tip: 222.6, base: 251.3, w: 6.9 },
       ],
-      // the open book now lies left of the bottles (client 21 Nov: the page turns were hidden behind them)
-      book: { right: [[197.5,729.1],[303.1,742.4],[262.3,784.3],[139.1,780.6]], left: [[197.5,729.1],[71.7,738.1],[32.9,770.5],[139.1,780.6]], lift: 0.8 },
+    },
+    mob: {
+      img: 'scene/al-coffee-m.webp', nf: 'scene/al-coffee-nf-m.webp', mask: 'scene/al-coffee-mask-m.png', w: 1199, h: 1312,
+      front: null,
+      bottles: [],
+      book: null,
+      fire: { x: 1115, y: 655, rx: 115, ry: 85 },
+      // real fireplace flames (video) blended into the fire under the cauldron
+      fireVid: { src: 'hf-loop.webm', x: 696.5, y: 521.5, w: 864, h: 486 },
+      wisps: { x0: 1000, x1: 1160, y: 345, w: 15, rate: 3, rise: 24 },
+      steam: [{ x: 1080, y: 295, rx: 85, ry: 70 }],
+      glows: [{ x: 1115, y: 650, r: 230, k: 0.07 }, { x: 1130, y: 700, r: 120, k: 0.1 }, { x: 53, y: 268, r: 120, k: 0.07 }],
+      candles: [
+        { x: 53, tip: 241, base: 292, w: 8 },
+        { x: 792, tip: 430, base: 455, w: 6 },
+      ],
     },
   };
 
@@ -350,7 +340,7 @@ void main(){
           if (!tex) { tex = gl.createTexture(); texNF = gl.createTexture(); texM = gl.createTexture(); }
           up(tex, im); up(texNF, nf); up(texM, mk);
           texReady = true;
-          Hr = sq2quad(L.book.right); Hl = sq2quad(L.book.left);
+          Hr = L.book ? sq2quad(L.book.right) : null; Hl = L.book ? sq2quad(L.book.left) : null;
           render(tNow);
         }).catch(() => {});
       }
@@ -534,7 +524,7 @@ void main(){
         let tp = null;
         if (freeze != null) tp = freeze;
         else if (motion && turnStart >= 0 && t >= turnStart && t <= turnStart + turnDur) tp = (t - turnStart) / turnDur;
-        if (tp != null && Hr && progPage) {
+        if (tp != null && Hr && L.book && progPage) {
           pageGeometry(tp);
           gl.useProgram(progPage);
           const P = (n) => gl.getUniformLocation(progPage, n);
@@ -624,7 +614,7 @@ void main(){
         lastFrame = now;
         tNow += dt;
         if (fixedT != null) tNow = fixedT;
-        if (freeze == null && !turnSounded && turnStart >= 0 && tNow >= turnStart) {
+        if (freeze == null && !turnSounded && turnStart >= 0 && tNow >= turnStart && L && L.book) {
           turnSounded = true;
           ctx.sfx((ac, out) => pageSound(ac, out, turnDur));
         }

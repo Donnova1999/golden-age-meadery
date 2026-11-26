@@ -197,6 +197,8 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
    Computers keep the previous wide scenes. */
 @media (max-width: 760px) {
   .mead-setting[data-kind] { aspect-ratio: 1068 / 1472; }
+  /* client 26 Nov: Ancient Lore is Miki's coffee picture now; keep its own shape so both candles and the cauldron show */
+  .mead-setting[data-kind=library] { aspect-ratio: 1199 / 1312; }
 }
 /* computers (client, 5 Nov): the same wide scenes, zoomed out a little so the whole picture fits on the screen
    under the title (menu + title take about 330px), centred; never wider than before */
@@ -204,6 +206,8 @@ html.gam-age-lock, html.gam-age-lock body { overflow: hidden; }
   /* desktop (client, 6 Nov): edge to edge across the window, whole picture, never cropped.
      The section has 6% side padding, so the content box is 88% of the window. */
   .mead-setting[data-kind] { width: calc(100% / .88); max-width: none; margin-left: calc(-6% / .88); margin-right: 0; }
+  /* client 26 Nov: Ancient Lore (Miki's coffee picture) edge to edge, from the candle flame down to the bottle bases */
+  .mead-setting[data-kind=library] { aspect-ratio: 1376 / 891; }
 }
 
 /* Life on Salt Spring photos (client, 1 Nov): justified rows, each photo at its own shape (no cropping) */
