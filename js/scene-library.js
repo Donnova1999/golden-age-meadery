@@ -17,7 +17,7 @@
     // Desktop (client 26 Nov): edge to edge, full width like the previous scene; the photo's band from the
     // candle flame down to the bottle bases (y 236-1012 of the 1199x1312 picture). Phones: the whole picture.
     desk: {
-      img: 'scene/al-coffee-d.webp', nf: 'scene/al-coffee-nf-d.webp', mask: 'scene/al-coffee-mask-d.png', w: 1376, h: 891,
+      img: 'scene/al-coffee-d.webp', nf: 'scene/al-coffee-nf2-d.webp', mask: 'scene/al-coffee-mask2-d.png', w: 1376, h: 891,
       front: null,
       bottles: [],
       book: null,
@@ -33,7 +33,7 @@
       ],
     },
     mob: {
-      img: 'scene/al-coffee-m.webp', nf: 'scene/al-coffee-nf-m.webp', mask: 'scene/al-coffee-mask-m.png', w: 1199, h: 1312,
+      img: 'scene/al-coffee-m.webp', nf: 'scene/al-coffee-nf2-m.webp', mask: 'scene/al-coffee-mask2-m.png', w: 1199, h: 1312,
       front: null,
       bottles: [],
       book: null,
@@ -135,7 +135,11 @@ void main(){
   if(mS>0.001){ col=texNF(p+s1o)*sw+texNF(p+s2o)*(1.-sw); }
   if(fireA>0.001){
     if(uVOn>0.5){
-      vec3 vc=texture2D(uVid,clamp((p-uVR.xy)/uVR.zw,vec2(0.001),vec2(0.999))).rgb*1.06;
+      // client 26 Nov: the pot fire is the video's flames over embers; soften them a little (the photo's
+      // fireplace is out of focus) and warm them to the photo's firelight
+      vec2 vu=clamp((p-uVR.xy)/uVR.zw,vec2(0.001),vec2(0.999)); vec2 vd=vec2(2.4)/uVR.zw;
+      vec3 vc=(texture2D(uVid,vu).rgb*0.4+(texture2D(uVid,vu+vec2(vd.x,0.)).rgb+texture2D(uVid,vu-vec2(vd.x,0.)).rgb
+        +texture2D(uVid,vu+vec2(0.,vd.y)).rgb+texture2D(uVid,vu-vec2(0.,vd.y)).rgb)*0.15)*vec3(1.,.84,.6)*1.06;
       col=mix(col,1.-(1.-col)*(1.-vc),clamp(fireA,0.,1.));
     } else { vec3 fl=tex(p+o1)*w1+tex(p+o2)*(1.-w1); col=mix(col,fl,clamp(fireA,0.,1.)); }
   }
