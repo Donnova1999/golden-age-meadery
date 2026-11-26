@@ -216,7 +216,7 @@ void main(){
 
       const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false, preserveDrawingBuffer: false });
       let alive = true, paused = false, raf = 0, t0 = performance.now(), tNow = 0, lastFrame = 0;
-      let mode = null, L = null, tex = null, texNF = null, texM = null, texV = null, vid = null, vidReady = false, texReady = false, imgCache = {};
+      let mode = null, L = null, tex = null, texNF = null, texM = null, texV = null, vid = null, vidReady = false, vidTexFail = false, texReady = false, imgCache = {};
       let map = { s: 1, ox: 0, oy: 0 }, fw = 1, fh = 1, dpr = 1;
       let progBase, progPage, bufFull, pageBuf = {}, idxBuf, idxCount = 0;
       const R = rnd(7);
@@ -354,6 +354,8 @@ void main(){
         if (!gl || reduced || !L.fireVid) return;
         vid = document.createElement('video');
         vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'auto';
+        // the scene also runs inside the Wix embed (another domain): WebGL may only read the video with CORS
+        vid.crossOrigin = 'anonymous'; vidTexFail = false;
         vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('aria-hidden', 'true');
         // sits behind the (opaque) WebGL canvas: never seen, but counts as on-screen so phones keep playing it
         vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';
@@ -485,11 +487,14 @@ void main(){
         gl.uniform1i(U('uTex'), 0);
         gl.uniform1i(U('uNF'), 1);
         gl.uniform1i(U('uMsk'), 2);
-        const vOn = !!(vid && vidReady && L.fireVid && motion);
+        let vOn = !!(vid && vidReady && L.fireVid && motion && !vidTexFail);
         if (vOn) {
           gl.activeTexture(gl.TEXTURE3);
           gl.bindTexture(gl.TEXTURE_2D, texV);
-          try { gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, vid); } catch (e) {}
+          // if a browser refuses the video frame, fall back to the photo's own fire (flowing), never bare embers
+          try { gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, vid); }
+          catch (e) { vidTexFail = true; vOn = false; console.warn('[ancient-lore] fire video unavailable to WebGL', e); }
+          if (!vOn) gl.activeTexture(gl.TEXTURE0);
           gl.uniform1i(U('uVid'), 3);
           const v = L.fireVid;
           gl.uniform4f(U('uVR'), v.x, v.y, v.w, v.h);
